@@ -86,7 +86,7 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
     keywordScore,
     contentDepthScore,
     readabilityMetrics,
-    headingAnalysis,
+    headingAnalysis: headingAnalysis.details,
     schemaAnalysis
   })
   

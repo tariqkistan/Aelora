@@ -75,66 +75,92 @@ export default function ResultsContent() {
     // Fetch results from API
     const fetchResults = async () => {
       try {
-        // Check if we have a cached result (for demo purposes)
-        let cachedResult = null
-        try {
-          const cachedData = localStorage.getItem('analysisResult')
-          if (cachedData) {
-            cachedResult = JSON.parse(cachedData)
-          }
-        } catch (e) {
-          console.error('Error accessing localStorage:', e)
-        }
+        setLoading(true)
         
-        if (cachedResult && cachedResult.url === url) {
-          setResults(cachedResult)
+        // Always try to fetch real data from the API first
+        try {
+          console.log("Fetching real data from API...")
+          const result = await analyzeUrl(url)
+          console.log("API returned:", result)
+          setResults(result)
           setLoading(false)
-          // Clear cache after using it
-          try {
-            localStorage.removeItem('analysisResult')
-          } catch (e) {
-            console.error('Error accessing localStorage:', e)
-          }
           return
-        }
-
-        // In production, make the API call to AWS
-        if (process.env.NODE_ENV === 'production') {
-          try {
-            const result = await analyzeUrl(url)
-            setResults(result)
+        } catch (apiError) {
+          console.error("API call failed:", apiError)
+          
+          // In production, show error since we can't use mock data
+          if (process.env.NODE_ENV === 'production') {
+            setError("Failed to analyze URL. Our servers might be busy, please try again later.")
             setLoading(false)
             return
-          } catch (apiError) {
-            console.error("API call failed, falling back to mock data:", apiError)
-            // Fall through to mock data if API fails
-          }
-        }
-        
-        // For development or if API fails, use mock data
-        setTimeout(() => {
-          const mockData: AnalysisResult = {
-            url: url,
-            timestamp: new Date().toISOString(),
-            scores: {
-              readability: Math.floor(Math.random() * 30) + 70,
-              schema: Math.floor(Math.random() * 40) + 60,
-              questionAnswerMatch: Math.floor(Math.random() * 20) + 80,
-              headingsStructure: Math.floor(Math.random() * 25) + 75,
-              overallScore: Math.floor(Math.random() * 25) + 75
-            },
-            recommendations: [
-              "Add more structured data using Schema.org markup",
-              "Improve content organization with clear headings and subheadings",
-              "Include more concise answers to common questions in your niche",
-              "Use shorter paragraphs and sentences to improve readability",
-              "Add more descriptive meta tags and image alt text"
-            ]
           }
           
-          setResults(mockData)
-          setLoading(false)
-        }, 3000)
+          console.log("Falling back to mock data in development environment")
+        }
+        
+        // For development only, generate mock data if API fails
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Generating mock data...")
+          setTimeout(() => {
+            const mockData: AnalysisResult = {
+              url: url,
+              timestamp: new Date().toISOString(),
+              scores: {
+                readability: Math.floor(Math.random() * 30) + 70,
+                schema: Math.floor(Math.random() * 40) + 60,
+                questionAnswerMatch: Math.floor(Math.random() * 20) + 80,
+                headingsStructure: Math.floor(Math.random() * 25) + 75,
+                overallScore: Math.floor(Math.random() * 25) + 75,
+                contentDepth: Math.floor(Math.random() * 25) + 70,
+                keywordOptimization: Math.floor(Math.random() * 30) + 65
+              },
+              recommendations: [
+                "Add more structured data using Schema.org markup",
+                "Improve content organization with clear headings and subheadings",
+                "Include more concise answers to common questions in your niche",
+                "Use shorter paragraphs and sentences to improve readability",
+                "Add more descriptive meta tags and image alt text"
+              ],
+              details: {
+                wordCount: 1250,
+                hasSchema: false,
+                headingCount: 8,
+                imageCount: 3,
+                imageAltTextRate: 75,
+                readabilityMetrics: {
+                  sentenceLength: 18.5,
+                  wordLength: 4.8,
+                  fleschKincaidGrade: 9.2,
+                  smogIndex: 8.5,
+                  colemanLiauIndex: 10.1
+                },
+                headingAnalysis: {
+                  hasProperHierarchy: true,
+                  nestedStructureScore: 25,
+                  keywordInHeadings: 60
+                },
+                schemaDetails: {
+                  types: [],
+                  isValid: false,
+                  completeness: 0
+                },
+                faqCount: 2,
+                paragraphCount: 15,
+                keywordsFound: ["example", "keyword", "content", "analysis", "optimization"],
+                contentToCodeRatio: 0.25,
+                listsAndTables: 3
+              },
+              performance: {
+                fetchTimeMs: 1200,
+                analysisTimeMs: 800,
+                totalTimeMs: 2000
+              }
+            }
+            
+            setResults(mockData)
+            setLoading(false)
+          }, 2000)
+        }
       } catch (err) {
         console.error("Error fetching results:", err)
         setError("Error analyzing the URL. Please try again.")

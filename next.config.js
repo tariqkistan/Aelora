@@ -10,14 +10,17 @@ const nextConfig = {
       },
     ],
   },
-  // Exclude AWS infrastructure code from the build
+  // Exclude AWS directories from the build
   webpack: (config, { isServer }) => {
-    // Add aws/ to exclude patterns
-    config.watchOptions = {
-      ...config.watchOptions,
-      ignored: [...(config.watchOptions.ignored || []), '**/aws/**'],
-    };
+    // Exclude the aws directory from the build
+    config.externals = [...(config.externals || []), { 'aws-cdk-lib': 'aws-cdk-lib' }];
     return config;
+  },
+  // Add directories that should be excluded from the build
+  experimental: {
+    outputFileTracingExcludes: {
+      '*': ['aws/**/*'],
+    },
   },
 };
 

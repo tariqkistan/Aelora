@@ -1,16 +1,9 @@
-# Ignore AWS infrastructure code
-aws
+# AWS Infrastructure code
 aws/
-/aws
-/aws/
-aws/**/*
-**/aws/**
-aws/cdk
-aws/lambda
-.aws-sam
-cdk.out
+# CDK build outputs
+cdk.out/
+.aws-sam/
 
-# Other files
+# Other files/directories not needed for frontend
 README.md
-.git
-.github 
+LICENSE 

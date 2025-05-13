@@ -1,0 +1,5 @@
+# Ignore AWS infrastructure code
+aws/
+README.md
+.git/
+.github/ 

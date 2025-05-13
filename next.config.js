@@ -10,6 +10,15 @@ const nextConfig = {
       },
     ],
   },
+  // Exclude AWS infrastructure code from the build
+  webpack: (config, { isServer }) => {
+    // Add aws/ to exclude patterns
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: [...(config.watchOptions.ignored || []), '**/aws/**'],
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig; 

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { analyzeUrl } from "@/lib/apiClient"
 
 export default function InputForm() {
   const [url, setUrl] = useState("")
@@ -31,8 +32,20 @@ export default function InputForm() {
       setIsLoading(true)
       
       // For MVP, we'll just redirect to the results page with the URL
-      // In the actual implementation, we'd call the API endpoint here
+      // In the production version, we could call the API directly here
+      // and only redirect after getting a response
       router.push(`/results?url=${encodeURIComponent(formattedUrl)}`)
+      
+      // Alternatively, to call the API directly:
+      // try {
+      //   const result = await analyzeUrl(formattedUrl);
+      //   // Store result in local storage or context
+      //   localStorage.setItem('analysisResult', JSON.stringify(result));
+      //   router.push(`/results?url=${encodeURIComponent(formattedUrl)}`);
+      // } catch (apiError) {
+      //   setError("Error analyzing URL. Please try again.");
+      //   setIsLoading(false);
+      // }
     } catch (err) {
       setError("Please enter a valid URL")
       setIsLoading(false)

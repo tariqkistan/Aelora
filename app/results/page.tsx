@@ -7,6 +7,7 @@ import Link from "next/link"
 import ScoreCard from "@/components/ScoreCard"
 import ReportCard from "@/components/ReportCard"
 import Loader from "@/components/Loader"
+import { analyzeUrl } from "@/lib/apiClient"
 
 interface AnalysisResult {
   url: string
@@ -35,14 +36,36 @@ export default function ResultsPage() {
       return
     }
 
-    // Simulating API call for MVP
+    // Fetch results from API
     const fetchResults = async () => {
       try {
-        // This would be an actual API call in production
-        // const response = await fetch(`/api/analyze?url=${encodeURIComponent(url)}`)
-        // const data = await response.json()
+        // Check if we have a cached result (for demo purposes)
+        const cachedResult = localStorage.getItem('analysisResult')
+        if (cachedResult) {
+          const parsedResult = JSON.parse(cachedResult)
+          if (parsedResult.url === url) {
+            setResults(parsedResult)
+            setLoading(false)
+            // Clear cache after using it
+            localStorage.removeItem('analysisResult')
+            return
+          }
+        }
+
+        // In production, make the API call to AWS
+        if (process.env.NODE_ENV === 'production') {
+          try {
+            const result = await analyzeUrl(url)
+            setResults(result)
+            setLoading(false)
+            return
+          } catch (apiError) {
+            console.error("API call failed, falling back to mock data:", apiError)
+            // Fall through to mock data if API fails
+          }
+        }
         
-        // Mock data for MVP demonstration
+        // For development or if API fails, use mock data
         setTimeout(() => {
           const mockData: AnalysisResult = {
             url: url,

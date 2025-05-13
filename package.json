@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "SKIP_AWS=true next build",
+    "build:vercel": "SKIP_AWS=true NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint"
   },

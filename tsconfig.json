@@ -23,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "aws", "aws/**/*", "**/aws/**/*", "**/*.aws.ts", ".aws-sam", "cdk.out"]
+  "exclude": ["node_modules", "aws", "aws/**/*", "**/*.aws.ts", ".aws-sam", "cdk.out", "**/lambda"]
 } 

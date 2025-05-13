@@ -1,0 +1,11 @@
+{
+  "buildCommand": "find ./aws -type f -name \"*.ts\" -exec rm -f {} \\; && npm run build",
+  "ignoreCommand": "echo 'Skipping build if aws directory changes'",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "regions": ["iad1"],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://fcfz0pijd5.execute-api.us-east-1.amazonaws.com/prod"
+  }
+} 

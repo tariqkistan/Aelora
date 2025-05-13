@@ -1,5 +1,16 @@
 # Ignore AWS infrastructure code
+aws
 aws/
+/aws
+/aws/
+aws/**/*
+**/aws/**
+aws/cdk
+aws/lambda
+.aws-sam
+cdk.out
+
+# Other files
 README.md
-.git/
-.github/ 
+.git
+.github 

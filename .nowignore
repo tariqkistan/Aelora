@@ -1,0 +1,10 @@
+aws
+aws/
+/aws
+/aws/
+aws/**/*
+aws/cdk
+aws/lambda
+.aws-sam
+cdk.out
+README.md 

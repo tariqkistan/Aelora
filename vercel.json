@@ -1,6 +1,5 @@
 {
   "buildCommand": "rm -rf ./aws && npm run build",
-  "ignoreCommand": "echo 'Skipping build if aws directory changes'",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "installCommand": "npm install",

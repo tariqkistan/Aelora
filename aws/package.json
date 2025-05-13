@@ -1,6 +1,0 @@
-{
-  "name": "aws-infrastructure",
-  "private": true,
-  "version": "0.1.0",
-  "description": "Infrastructure as code for Aelora - Not part of the Next.js build"
-} 

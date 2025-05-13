@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./aws/",
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://fcfz0pijd5.execute-api.us-east-1.amazonaws.com/prod"
+  }
+} 

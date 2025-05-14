@@ -13,7 +13,7 @@ export async function analyzeUrl(url: string): Promise<any> {
     console.log(`Analyzing URL: ${url}`);
     
     // Determine the endpoint based on environment
-    const endpoint = process.env.NODE_ENV === 'production' 
+    const endpoint = typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? `${API_URL}/analyze?url=${encodeURIComponent(url)}`
       : `/api/analyze?url=${encodeURIComponent(url)}`;
     

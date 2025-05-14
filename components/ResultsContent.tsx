@@ -89,7 +89,7 @@ export default function ResultsContent() {
           console.error("API call failed:", apiError)
           
           // In production, show error since we can't use mock data
-          if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') {
+          if (process.env.NODE_ENV === 'production') {
             setError("Failed to analyze URL. Our servers might be busy, please try again later.")
             setLoading(false)
             return
@@ -99,7 +99,7 @@ export default function ResultsContent() {
         }
         
         // For development only, generate mock data if API fails
-        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
           console.log("Generating mock data...")
           setTimeout(() => {
             const mockData: AnalysisResult = {

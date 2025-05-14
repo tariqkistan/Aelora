@@ -77,6 +77,9 @@ export default function ResultsContent() {
       try {
         setLoading(true)
         
+        // Extract NODE_ENV once to avoid duplications
+        const nodeEnv = process.env.NODE_ENV;
+        
         // Always try to fetch real data from the API first
         try {
           console.log("Fetching real data from API...")
@@ -89,7 +92,7 @@ export default function ResultsContent() {
           console.error("API call failed:", apiError)
           
           // In production, show error since we can't use mock data
-          if (process.env.NODE_ENV === 'production') {
+          if (nodeEnv === 'production') {
             setError("Failed to analyze URL. Our servers might be busy, please try again later.")
             setLoading(false)
             return
@@ -99,7 +102,7 @@ export default function ResultsContent() {
         }
         
         // For development only, generate mock data if API fails
-        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+        if (nodeEnv === 'development' || nodeEnv === 'test') {
           console.log("Generating mock data...")
           setTimeout(() => {
             const mockData: AnalysisResult = {

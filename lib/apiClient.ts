@@ -50,7 +50,7 @@ export async function analyzeUrl(url: string): Promise<any> {
       clearTimeout(timeoutId);
       
       // Handle timeout specifically
-      if (fetchError.name === 'AbortError') {
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         console.error('API request timed out after', API_TIMEOUT / 1000, 'seconds');
         throw new Error(`Analysis timed out after ${API_TIMEOUT / 1000} seconds. The website might be too large or our servers are busy.`);
       }

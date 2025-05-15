@@ -2,7 +2,8 @@
  * API client for interacting with the backend
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://fcfz0pijd5.execute-api.us-east-1.amazonaws.com/prod';
+// Always use the local Next.js API route which will proxy to AWS when needed
+const API_URL = '/api';
 const API_TIMEOUT = 30000; // 30 seconds timeout for API calls
 
 /**
@@ -12,11 +13,8 @@ export async function analyzeUrl(url: string): Promise<any> {
   try {
     console.log(`Analyzing URL: ${url}`);
     
-    // Determine the endpoint based on environment
-    const isLocalhost = API_URL.includes('localhost');
-    const endpoint = isLocalhost 
-      ? `${API_URL}/analyze?url=${encodeURIComponent(url)}`
-      : `${API_URL}/analyze?url=${encodeURIComponent(url)}`;
+    // Determine the endpoint
+    const endpoint = `${API_URL}/analyze?url=${encodeURIComponent(url)}`;
     
     console.log(`Using endpoint: ${endpoint}`);
     

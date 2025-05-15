@@ -22,10 +22,10 @@ const openai = new OpenAI({
  * @param content The website content to analyze
  * @param url The URL of the website being analyzed
  */
-export async function analyzeContentWithAI(content: string, url: string): Promise<any> {
+export async function analyzeContentWithAI(contentHtml: string, url: string): Promise<any> {
   try {
     // Trim content if it's too large to avoid token limits
-    const contentStr: string = content || '';
+    const contentStr: string = contentHtml || '';
     const trimmedContent = contentStr.length > 12000 
       ? contentStr.substring(0, 12000) + '...' 
       : contentStr;

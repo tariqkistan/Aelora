@@ -91,12 +91,12 @@ export async function analyzeContentWithAI(contentHtml: string, url: string): Pr
     });
 
     // Parse the JSON response
-    const content = response.choices[0].message.content;
-    if (!content) {
+    const responseContent = response.choices[0].message.content;
+    if (!responseContent) {
       throw new Error('AI model returned empty response');
     }
     
-    const result = JSON.parse(content);
+    const result = JSON.parse(responseContent);
     
     console.log('AI analysis completed successfully');
     return result;

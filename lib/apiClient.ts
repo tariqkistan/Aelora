@@ -2,7 +2,7 @@
  * API client for interacting with the backend
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://fcfz0pijd5.execute-api.us-east-1.amazonaws.com/prod';
 const API_TIMEOUT = 30000; // 30 seconds timeout for API calls
 
 /**
@@ -13,7 +13,10 @@ export async function analyzeUrl(url: string): Promise<any> {
     console.log(`Analyzing URL: ${url}`);
     
     // Determine the endpoint based on environment
-    const endpoint = `${API_URL}/analyze?url=${encodeURIComponent(url)}`;
+    const isLocalhost = API_URL.includes('localhost');
+    const endpoint = isLocalhost 
+      ? `${API_URL}/analyze?url=${encodeURIComponent(url)}`
+      : `${API_URL}/analyze?url=${encodeURIComponent(url)}`;
     
     console.log(`Using endpoint: ${endpoint}`);
     

@@ -20,6 +20,7 @@ interface AnalysisResult {
     overallScore: number
     contentDepth?: number
     keywordOptimization?: number
+    aiVisibilityScore?: number
   }
   recommendations: string[]
   details?: {
@@ -50,6 +51,7 @@ interface AnalysisResult {
     faqCount: number
     contentToCodeRatio: number
     keywordsFound: string[]
+    aiAnalysis?: any
   }
   performance?: {
     fetchTimeMs: number
@@ -249,14 +251,22 @@ export default function ResultsContent() {
             <ScoreCard 
               title="Content Depth"
               score={results.scores.contentDepth}
-              description="Comprehensiveness and richness of your content"
+              description="Depth and comprehensiveness of your content"
             />
           )}
           {results.scores.keywordOptimization !== undefined && (
             <ScoreCard 
               title="Keyword Optimization"
               score={results.scores.keywordOptimization}
-              description="Strategic placement of relevant keywords"
+              description="How well your content uses relevant keywords"
+            />
+          )}
+          {results.scores.aiVisibilityScore !== undefined && (
+            <ScoreCard 
+              title="AI Visibility"
+              score={results.scores.aiVisibilityScore}
+              description="AI-powered analysis of your content's visibility to AI systems"
+              highlight={true}
             />
           )}
         </div>
@@ -419,9 +429,47 @@ export default function ResultsContent() {
           </div>
         )}
 
+        {/* AI Analysis Section */}
+        {results.details?.aiAnalysis && (
+          <div className="bg-muted p-6 rounded-lg border shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">AI-Powered Analysis</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {Object.entries(results.details.aiAnalysis.key_areas || {}).map(([key, value]: [string, any]) => (
+                <div key={key} className="bg-background p-4 rounded-md shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium capitalize">{key.replace(/_/g, ' ')}</h3>
+                    <span className="font-semibold">
+                      {value.score}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{value.analysis}</p>
+                </div>
+              ))}
+            </div>
+
+            {results.details.aiAnalysis.strengths && results.details.aiAnalysis.strengths.length > 0 && (
+              <div className="mb-4">
+                <h3 className="font-medium mb-2">Key Strengths</h3>
+                <ul className="list-disc pl-5 text-sm">
+                  {results.details.aiAnalysis.strengths.map((strength: string, index: number) => (
+                    <li key={index} className="mb-1">{strength}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {results.details.aiAnalysis.summary && (
+              <div className="text-sm bg-accent/50 p-3 rounded">
+                <p className="italic">{results.details.aiAnalysis.summary}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         <ReportCard 
           title="Recommendations"
-          recommendations={results.recommendations}
+          items={results.recommendations}
         />
 
         <div className="flex justify-center gap-4 mt-8">

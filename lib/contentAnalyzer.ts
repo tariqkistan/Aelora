@@ -1,4 +1,5 @@
 import { WebContent } from './contentFetcher'
+import { analyzeContentWithAI } from './aiService'
 
 export interface AnalysisResult {
   url: string
@@ -12,6 +13,7 @@ export interface AnalysisResult {
     // New scores
     contentDepth?: number
     keywordOptimization?: number
+    aiVisibilityScore?: number  // New AI-powered score
   }
   recommendations: string[]
   details: {
@@ -42,6 +44,7 @@ export interface AnalysisResult {
     keywordsFound: string[]
     contentToCodeRatio: number
     listsAndTables: number
+    aiAnalysis?: any  // Store detailed AI analysis results
   }
 }
 
@@ -67,17 +70,43 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
   // 6. Calculate content depth score
   const contentDepthScore = calculateContentDepthScore(content)
   
-  // 7. Calculate overall score (weighted average with new metrics)
+  // 7. Perform AI analysis if OPENROUTER_API_KEY is available
+  let aiAnalysisResults = null
+  let aiVisibilityScore = 0
+
+  try {
+    if (process.env.OPENROUTER_API_KEY) {
+      console.log('Performing AI-powered content analysis...')
+      aiAnalysisResults = await analyzeContentWithAI(content.mainContent, url)
+      aiVisibilityScore = aiAnalysisResults.overall_score || 0
+      console.log('AI analysis completed with score:', aiVisibilityScore)
+    } else {
+      console.log('Skipping AI analysis - OPENROUTER_API_KEY not configured')
+    }
+  } catch (error) {
+    console.error('Error during AI analysis:', error)
+    // Continue with traditional analysis if AI analysis fails
+  }
+  
+  // 8. Calculate overall score (weighted average with AI score if available)
   const overallScore = Math.round(
-    (readabilityScore * 0.20) +
-    (schemaScore * 0.20) +
-    (headingsStructureScore * 0.15) +
-    (questionAnswerScore * 0.15) +
-    (keywordScore * 0.15) +
-    (contentDepthScore * 0.15)
+    aiVisibilityScore > 0 
+      ? (readabilityScore * 0.15) +
+        (schemaScore * 0.15) +
+        (headingsStructureScore * 0.10) +
+        (questionAnswerScore * 0.10) +
+        (keywordScore * 0.10) +
+        (contentDepthScore * 0.10) +
+        (aiVisibilityScore * 0.30)  // Give significant weight to AI analysis
+      : (readabilityScore * 0.20) +
+        (schemaScore * 0.20) +
+        (headingsStructureScore * 0.15) +
+        (questionAnswerScore * 0.15) +
+        (keywordScore * 0.15) +
+        (contentDepthScore * 0.15)
   )
   
-  // 8. Generate recommendations
+  // 9. Generate recommendations (combining traditional and AI recommendations)
   const recommendations = generateRecommendations(content, {
     readabilityScore,
     schemaScore,
@@ -87,7 +116,8 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
     contentDepthScore,
     readabilityMetrics,
     headingAnalysis: headingAnalysis.details,
-    schemaAnalysis
+    schemaAnalysis,
+    aiAnalysisResults
   })
   
   return {
@@ -100,7 +130,8 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
       headingsStructure: headingsStructureScore,
       overallScore,
       contentDepth: contentDepthScore,
-      keywordOptimization: keywordScore
+      keywordOptimization: keywordScore,
+      aiVisibilityScore: aiVisibilityScore || undefined
     },
     recommendations,
     details: {
@@ -122,7 +153,8 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
       paragraphCount: content.paragraphs,
       keywordsFound: content.keywords || [],
       contentToCodeRatio: content.contentToCodeRatio || 0,
-      listsAndTables: content.lists + content.tables
+      listsAndTables: content.lists + content.tables,
+      aiAnalysis: aiAnalysisResults
     }
   }
 }
@@ -584,9 +616,22 @@ function generateRecommendations(
     readabilityMetrics?: ReadabilityMetrics;
     headingAnalysis?: HeadingAnalysisResult['details'];
     schemaAnalysis?: SchemaAnalysisResult;
+    aiAnalysisResults?: any;
   }
 ): string[] {
   const recommendations: string[] = []
+  
+  // Add AI-powered recommendations if available
+  if (scores.aiAnalysisResults?.improvement_areas) {
+    // Get high and medium priority recommendations from AI analysis
+    const aiRecommendations = scores.aiAnalysisResults.improvement_areas
+      .filter((area: any) => area.priority === 'high' || area.priority === 'medium')
+      .map((area: any) => `${area.title}: ${area.description}`)
+    
+    if (aiRecommendations.length > 0) {
+      recommendations.push(...aiRecommendations)
+    }
+  }
   
   // Readability recommendations (enhanced)
   if (scores.readabilityScore < 70) {

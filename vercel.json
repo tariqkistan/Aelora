@@ -1,6 +1,7 @@
 {
   "framework": "nextjs",
   "outputDirectory": ".next",
+  "buildCommand": "next build",
   "env": {
     "NEXT_PUBLIC_API_URL": "https://fcfz0pijd5.execute-api.us-east-1.amazonaws.com/prod"
   }

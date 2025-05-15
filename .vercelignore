@@ -1,0 +1,7 @@
+aws/
+aws/cdk
+aws/lambda
+node_modules
+.env
+.env.local
+.next 

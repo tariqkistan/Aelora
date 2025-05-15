@@ -88,7 +88,12 @@ export async function analyzeContentWithAI(content: string, url: string): Promis
     });
 
     // Parse the JSON response
-    const result = JSON.parse(response.choices[0].message.content);
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error('AI model returned empty response');
+    }
+    
+    const result = JSON.parse(content);
     
     console.log('AI analysis completed successfully');
     return result;

@@ -7,15 +7,15 @@ const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 // Default model to use - Claude 3 Sonnet is a good balance of speed and quality
 const DEFAULT_MODEL = 'anthropic/claude-3-sonnet@20240229';
 
-// Configure OpenAI client to use OpenRouter
-const openai = new OpenAI({
+// Configure OpenAI client to use OpenRouter - only if API key is available
+const openai = typeof window === 'undefined' && OPENROUTER_API_KEY ? new OpenAI({
   apiKey: OPENROUTER_API_KEY,
   baseURL: OPENROUTER_BASE_URL,
   defaultHeaders: {
     'HTTP-Referer': 'https://aelora-xi.vercel.app', // Replace with your site URL
     'X-Title': 'Aelora - AI Visibility Analyzer'
   }
-});
+}) : null;
 
 /**
  * Analyze content using an AI model for AI search optimization recommendations
@@ -24,6 +24,11 @@ const openai = new OpenAI({
  */
 export async function analyzeContentWithAI(contentHtml: string, url: string): Promise<any> {
   try {
+    // If OpenAI client is not initialized, throw an error
+    if (!openai) {
+      throw new Error('OpenAI client not initialized - OPENROUTER_API_KEY may be missing');
+    }
+    
     // Trim content if it's too large to avoid token limits
     const contentStr: string = contentHtml || '';
     const trimmedContent = contentStr.length > 12000 

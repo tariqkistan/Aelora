@@ -75,13 +75,13 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
   let aiVisibilityScore = 0
 
   try {
-    if (process.env.OPENROUTER_API_KEY) {
+    if (process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY !== 'sk-placeholder-key') {
       console.log('Performing AI-powered content analysis...')
       aiAnalysisResults = await analyzeContentWithAI(content.mainContent, url)
       aiVisibilityScore = aiAnalysisResults.overall_score || 0
       console.log('AI analysis completed with score:', aiVisibilityScore)
     } else {
-      console.log('Skipping AI analysis - OPENROUTER_API_KEY not configured')
+      console.log('Skipping AI analysis - OPENROUTER_API_KEY not configured or is a placeholder')
     }
   } catch (error) {
     console.error('Error during AI analysis:', error)

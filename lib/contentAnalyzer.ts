@@ -1,6 +1,6 @@
 import { WebContent } from './contentFetcher'
-// Temporarily comment out the AI service import for deployment
-// import { analyzeContentWithAI } from './aiService'
+// Re-enable the AI service import
+import { analyzeContentWithAI } from './aiService'
 
 export interface AnalysisResult {
   url: string
@@ -71,11 +71,11 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
   // 6. Calculate content depth score
   const contentDepthScore = calculateContentDepthScore(content)
   
-  // 7. AI analysis is temporarily disabled for deployment
+  // 7. Perform AI analysis if OPENROUTER_API_KEY is available
   let aiAnalysisResults = null
   let aiVisibilityScore = 0
 
-  /* Temporarily comment out AI analysis for deployment
+  // Re-enable AI analysis
   try {
     if (process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY !== 'sk-placeholder-key') {
       console.log('Performing AI-powered content analysis...')
@@ -89,7 +89,6 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
     console.error('Error during AI analysis:', error)
     // Continue with traditional analysis if AI analysis fails
   }
-  */
   
   // 8. Calculate overall score (weighted average with AI score if available)
   const overallScore = Math.round(

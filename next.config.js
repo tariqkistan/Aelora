@@ -10,6 +10,11 @@ const nextConfig = {
       },
     ],
   },
+  // Environment variables that will be available at build time
+  env: {
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://fcfz0pijd5.execute-api.us-east-1.amazonaws.com/prod',
+  },
   // Exclude AWS directories from the build
   webpack: (config, { isServer }) => {
     // Exclude the aws directory from the build

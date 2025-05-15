@@ -1,6 +1,5 @@
 import { WebContent } from './contentFetcher'
-// Re-enable the AI service import
-import { analyzeContentWithAI } from './aiService'
+import { analyzeContentWithAI, generateSuggestions } from './aiService'
 
 export interface AnalysisResult {
   url: string
@@ -14,9 +13,16 @@ export interface AnalysisResult {
     // New scores
     contentDepth?: number
     keywordOptimization?: number
-    aiVisibilityScore?: number  // New AI-powered score
+    aiAnalysisScore?: number // New AI-powered score
   }
   recommendations: string[]
+  aiRecommendations?: { // New AI-powered recommendations
+    title: string
+    description: string
+    rationale: string
+    example: string
+    expected_impact: string
+  }[]
   details: {
     wordCount: number
     hasSchema: boolean
@@ -45,7 +51,33 @@ export interface AnalysisResult {
     keywordsFound: string[]
     contentToCodeRatio: number
     listsAndTables: number
-    aiAnalysis?: any  // Store detailed AI analysis results
+    aiAnalysis?: { // New AI analysis details
+      content_clarity?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+      semantic_relevance?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+      entity_recognition?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+      information_completeness?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+      factual_accuracy?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+    }
   }
 }
 
@@ -71,44 +103,47 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
   // 6. Calculate content depth score
   const contentDepthScore = calculateContentDepthScore(content)
   
-  // 7. Perform AI analysis if OPENROUTER_API_KEY is available
-  let aiAnalysisResults = null
-  let aiVisibilityScore = 0
-
-  // Re-enable AI analysis
+  // 7. NEW: AI-powered analysis
+  let aiAnalysisResult = null;
+  let aiScore = 0;
+  let aiSuggestions = null;
+  
   try {
-    if (process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY !== 'sk-placeholder-key') {
-      console.log('Performing AI-powered content analysis...')
-      aiAnalysisResults = await analyzeContentWithAI(content.mainContent, url)
-      aiVisibilityScore = aiAnalysisResults.overall_score || 0
-      console.log('AI analysis completed with score:', aiVisibilityScore)
+    console.log("Performing AI analysis...");
+    // Get AI analysis if OPENROUTER_API_KEY is set
+    if (process.env.OPENROUTER_API_KEY) {
+      aiAnalysisResult = await analyzeContentWithAI(content.mainContent, url);
+      
+      // Calculate AI score (0-100) from overall_score (1-10)
+      if (aiAnalysisResult && aiAnalysisResult.overall_score) {
+        aiScore = Math.min(100, Math.max(0, aiAnalysisResult.overall_score * 10));
+        
+        // Get AI suggestions
+        const suggestionResult = await generateSuggestions(aiAnalysisResult, content.mainContent, url);
+        if (suggestionResult && suggestionResult.suggestions) {
+          aiSuggestions = suggestionResult.suggestions;
+        }
+      }
     } else {
-      console.log('Skipping AI analysis - OPENROUTER_API_KEY not configured or is a placeholder')
+      console.log("OPENROUTER_API_KEY not set, skipping AI analysis");
     }
   } catch (error) {
-    console.error('Error during AI analysis:', error)
-    // Continue with traditional analysis if AI analysis fails
+    console.error("Error in AI analysis:", error);
+    // Continue with standard analysis if AI fails
   }
   
-  // 8. Calculate overall score (weighted average with AI score if available)
+  // 8. Calculate overall score (weighted average with new metrics)
   const overallScore = Math.round(
-    aiVisibilityScore > 0 
-      ? (readabilityScore * 0.15) +
-        (schemaScore * 0.15) +
-        (headingsStructureScore * 0.10) +
-        (questionAnswerScore * 0.10) +
-        (keywordScore * 0.10) +
-        (contentDepthScore * 0.10) +
-        (aiVisibilityScore * 0.30)  // Give significant weight to AI analysis
-      : (readabilityScore * 0.20) +
-        (schemaScore * 0.20) +
-        (headingsStructureScore * 0.15) +
-        (questionAnswerScore * 0.15) +
-        (keywordScore * 0.15) +
-        (contentDepthScore * 0.15)
+    (readabilityScore * 0.15) +
+    (schemaScore * 0.15) +
+    (headingsStructureScore * 0.15) +
+    (questionAnswerScore * 0.10) +
+    (keywordScore * 0.15) +
+    (contentDepthScore * 0.15) +
+    (aiScore * 0.15) // Add AI score to overall calculation
   )
   
-  // 9. Generate recommendations (combining traditional and AI recommendations)
+  // 9. Generate recommendations
   const recommendations = generateRecommendations(content, {
     readabilityScore,
     schemaScore,
@@ -118,8 +153,7 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
     contentDepthScore,
     readabilityMetrics,
     headingAnalysis: headingAnalysis.details,
-    schemaAnalysis,
-    aiAnalysisResults
+    schemaAnalysis
   })
   
   return {
@@ -133,9 +167,10 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
       overallScore,
       contentDepth: contentDepthScore,
       keywordOptimization: keywordScore,
-      aiVisibilityScore: aiVisibilityScore || undefined
+      aiAnalysisScore: aiScore // Add AI score to results
     },
     recommendations,
+    aiRecommendations: aiSuggestions, // Add AI recommendations
     details: {
       wordCount: content.wordCount,
       hasSchema: content.schema.length > 0,
@@ -156,7 +191,7 @@ export async function analyzeContent(content: WebContent, url: string): Promise<
       keywordsFound: content.keywords || [],
       contentToCodeRatio: content.contentToCodeRatio || 0,
       listsAndTables: content.lists + content.tables,
-      aiAnalysis: aiAnalysisResults
+      aiAnalysis: aiAnalysisResult?.areas // Add AI analysis details
     }
   }
 }
@@ -618,22 +653,9 @@ function generateRecommendations(
     readabilityMetrics?: ReadabilityMetrics;
     headingAnalysis?: HeadingAnalysisResult['details'];
     schemaAnalysis?: SchemaAnalysisResult;
-    aiAnalysisResults?: any;
   }
 ): string[] {
   const recommendations: string[] = []
-  
-  // Add AI-powered recommendations if available
-  if (scores.aiAnalysisResults?.improvement_areas) {
-    // Get high and medium priority recommendations from AI analysis
-    const aiRecommendations = scores.aiAnalysisResults.improvement_areas
-      .filter((area: any) => area.priority === 'high' || area.priority === 'medium')
-      .map((area: any) => `${area.title}: ${area.description}`)
-    
-    if (aiRecommendations.length > 0) {
-      recommendations.push(...aiRecommendations)
-    }
-  }
   
   // Readability recommendations (enhanced)
   if (scores.readabilityScore < 70) {

@@ -20,9 +20,16 @@ interface AnalysisResult {
     overallScore: number
     contentDepth?: number
     keywordOptimization?: number
-    aiVisibilityScore?: number
+    aiAnalysisScore?: number
   }
   recommendations: string[]
+  aiRecommendations?: {
+    title: string
+    description: string
+    rationale: string
+    example: string
+    expected_impact: string
+  }[]
   details?: {
     wordCount: number
     hasSchema: boolean
@@ -51,7 +58,33 @@ interface AnalysisResult {
     faqCount: number
     contentToCodeRatio: number
     keywordsFound: string[]
-    aiAnalysis?: any
+    aiAnalysis?: {
+      content_clarity?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+      semantic_relevance?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+      entity_recognition?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+      information_completeness?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+      factual_accuracy?: {
+        score: number
+        observations: string[]
+        recommendations: string[]
+      }
+    }
   }
   performance?: {
     fetchTimeMs: number
@@ -227,6 +260,17 @@ export default function ResultsContent() {
             description="Your website's overall AI visibility score"
             isPrimary
           />
+          
+          {/* Add AI Score Card if available */}
+          {results.scores.aiAnalysisScore !== undefined && (
+            <ScoreCard 
+              title="AI Analysis Score"
+              score={results.scores.aiAnalysisScore}
+              description="AI-powered evaluation of your content"
+              isPrimary
+            />
+          )}
+          
           <ScoreCard 
             title="Readability"
             score={results.scores.readability}
@@ -251,7 +295,7 @@ export default function ResultsContent() {
             <ScoreCard 
               title="Content Depth"
               score={results.scores.contentDepth}
-              description="Depth and comprehensiveness of your content"
+              description="The thoroughness and detail of your content"
             />
           )}
           {results.scores.keywordOptimization !== undefined && (
@@ -259,14 +303,6 @@ export default function ResultsContent() {
               title="Keyword Optimization"
               score={results.scores.keywordOptimization}
               description="How well your content uses relevant keywords"
-            />
-          )}
-          {results.scores.aiVisibilityScore !== undefined && (
-            <ScoreCard 
-              title="AI Visibility"
-              score={results.scores.aiVisibilityScore}
-              description="AI-powered analysis of your content's visibility to AI systems"
-              highlight={true}
             />
           )}
         </div>
@@ -429,48 +465,242 @@ export default function ResultsContent() {
           </div>
         )}
 
-        {/* AI Analysis Section */}
-        {results.details?.aiAnalysis && (
-          <div className="bg-muted p-6 rounded-lg border shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">AI-Powered Analysis</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              {Object.entries(results.details.aiAnalysis.key_areas || {}).map(([key, value]: [string, any]) => (
-                <div key={key} className="bg-background p-4 rounded-md shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium capitalize">{key.replace(/_/g, ' ')}</h3>
-                    <span className="font-semibold">
-                      {value.score}
-                    </span>
+        <ReportCard 
+          title="Recommendations"
+          items={results.recommendations.map(rec => ({
+            title: rec,
+            content: ""
+          }))}
+        />
+
+        {/* AI-Powered Recommendations Section */}
+        {results.aiRecommendations && results.aiRecommendations.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">AI-Powered Recommendations</h2>
+            <div className="space-y-6">
+              {results.aiRecommendations.map((rec, idx) => (
+                <div key={idx} className="bg-muted/50 p-6 rounded-lg">
+                  <h3 className="text-xl font-semibold mb-2">{rec.title}</h3>
+                  <p className="mb-3">{rec.description}</p>
+                  
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Why this helps:</h4>
+                    <p className="text-sm mb-3">{rec.rationale}</p>
+                    
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Example:</h4>
+                    <div className="bg-background p-3 rounded text-sm mb-3">
+                      <code className="whitespace-pre-wrap">{rec.example}</code>
+                    </div>
+                    
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Expected Impact:</h4>
+                    <p className="text-sm">{rec.expected_impact}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">{value.analysis}</p>
                 </div>
               ))}
             </div>
-
-            {results.details.aiAnalysis.strengths && results.details.aiAnalysis.strengths.length > 0 && (
-              <div className="mb-4">
-                <h3 className="font-medium mb-2">Key Strengths</h3>
-                <ul className="list-disc pl-5 text-sm">
-                  {results.details.aiAnalysis.strengths.map((strength: string, index: number) => (
-                    <li key={index} className="mb-1">{strength}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {results.details.aiAnalysis.summary && (
-              <div className="text-sm bg-accent/50 p-3 rounded">
-                <p className="italic">{results.details.aiAnalysis.summary}</p>
-              </div>
-            )}
+          </div>
+        )}
+        
+        {/* AI Analysis Details Section */}
+        {results.details?.aiAnalysis && (
+          <div className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Detailed AI Analysis</h2>
+            
+            <div className="space-y-6">
+              {/* Content Clarity */}
+              {results.details.aiAnalysis.content_clarity && (
+                <div className="bg-muted/50 p-6 rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold">Content Clarity & Structure</h3>
+                    <span className="text-lg font-bold bg-primary text-primary-foreground px-3 py-1 rounded-full">
+                      {results.details.aiAnalysis.content_clarity.score}/10
+                    </span>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="font-medium mb-2">Key Observations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.content_clarity.observations.map((obs, i) => (
+                        <li key={i}>{obs}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Recommendations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.content_clarity.recommendations.map((rec, i) => (
+                        <li key={i}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+              
+              {/* Semantic Relevance */}
+              {results.details.aiAnalysis.semantic_relevance && (
+                <div className="bg-muted/50 p-6 rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold">Semantic Relevance</h3>
+                    <span className="text-lg font-bold bg-primary text-primary-foreground px-3 py-1 rounded-full">
+                      {results.details.aiAnalysis.semantic_relevance.score}/10
+                    </span>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="font-medium mb-2">Key Observations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.semantic_relevance.observations.map((obs, i) => (
+                        <li key={i}>{obs}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Recommendations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.semantic_relevance.recommendations.map((rec, i) => (
+                        <li key={i}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+              
+              {/* Entity Recognition */}
+              {results.details.aiAnalysis.entity_recognition && (
+                <div className="bg-muted/50 p-6 rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold">Entity Recognition</h3>
+                    <span className="text-lg font-bold bg-primary text-primary-foreground px-3 py-1 rounded-full">
+                      {results.details.aiAnalysis.entity_recognition.score}/10
+                    </span>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="font-medium mb-2">Key Observations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.entity_recognition.observations.map((obs, i) => (
+                        <li key={i}>{obs}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Recommendations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.entity_recognition.recommendations.map((rec, i) => (
+                        <li key={i}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+              
+              {/* Information Completeness */}
+              {results.details.aiAnalysis.information_completeness && (
+                <div className="bg-muted/50 p-6 rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold">Information Completeness</h3>
+                    <span className="text-lg font-bold bg-primary text-primary-foreground px-3 py-1 rounded-full">
+                      {results.details.aiAnalysis.information_completeness.score}/10
+                    </span>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="font-medium mb-2">Key Observations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.information_completeness.observations.map((obs, i) => (
+                        <li key={i}>{obs}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Recommendations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.information_completeness.recommendations.map((rec, i) => (
+                        <li key={i}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+              
+              {/* Factual Accuracy */}
+              {results.details.aiAnalysis.factual_accuracy && (
+                <div className="bg-muted/50 p-6 rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold">Factual Accuracy & Authority</h3>
+                    <span className="text-lg font-bold bg-primary text-primary-foreground px-3 py-1 rounded-full">
+                      {results.details.aiAnalysis.factual_accuracy.score}/10
+                    </span>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="font-medium mb-2">Key Observations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.factual_accuracy.observations.map((obs, i) => (
+                        <li key={i}>{obs}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Recommendations:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {results.details.aiAnalysis.factual_accuracy.recommendations.map((rec, i) => (
+                        <li key={i}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        <ReportCard 
-          title="Recommendations"
-          items={results.recommendations}
-        />
+        <div className="bg-muted/50 p-6 rounded-lg">
+          <h2 className="text-2xl font-bold mb-4">Page Details</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
+            <div>
+              <p className="text-muted-foreground text-sm">Word Count</p>
+              <p className="text-xl font-semibold">{results.details?.wordCount || 0}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">Headings</p>
+              <p className="text-xl font-semibold">{results.details?.headingCount || 0}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">Images</p>
+              <p className="text-xl font-semibold">{results.details?.imageCount || 0}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">Paragraphs</p>
+              <p className="text-xl font-semibold">{results.details?.paragraphCount || 0}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">Lists & Tables</p>
+              <p className="text-xl font-semibold">{results.details?.listsAndTables || 0}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">FAQs</p>
+              <p className="text-xl font-semibold">{results.details?.faqCount || 0}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">Schema</p>
+              <p className="text-xl font-semibold">{results.details?.hasSchema ? 'Yes' : 'No'}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">Content/Code Ratio</p>
+              <p className="text-xl font-semibold">{(results.details?.contentToCodeRatio || 0) * 100}%</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">Img Alt Text</p>
+              <p className="text-xl font-semibold">{results.details?.imageAltTextRate || 0}%</p>
+            </div>
+          </div>
+        </div>
 
         <div className="flex justify-center gap-4 mt-8">
           <Button asChild variant="outline">

@@ -4,13 +4,23 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { analyzeUrl } from "@/lib/apiClient"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { analyzeUrl, configureApiClient } from "@/lib/apiClient"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function InputForm() {
   const [url, setUrl] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [useDirectApi, setUseDirectApi] = useState(false)
   const router = useRouter()
+
+  // Configure API client when direct API toggle changes
+  const handleApiToggle = (checked: boolean) => {
+    setUseDirectApi(checked)
+    configureApiClient({ useDirectApi: checked })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,6 +77,32 @@ export default function InputForm() {
           <p className="text-sm text-destructive">{error}</p>
         )}
       </div>
+      
+      <div className="flex items-center space-x-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="use-direct-api"
+                  checked={useDirectApi}
+                  onCheckedChange={handleApiToggle}
+                  disabled={isLoading}
+                />
+                <Label htmlFor="use-direct-api" className="text-sm cursor-pointer">
+                  Use AWS API directly
+                </Label>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs max-w-[200px]">
+                Toggle between using the Next.js API proxy (default) or making direct calls to the AWS API Gateway
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      
       <Button
         type="submit"
         className="w-full"

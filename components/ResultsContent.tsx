@@ -467,10 +467,7 @@ export default function ResultsContent() {
 
         <ReportCard 
           title="Recommendations"
-          items={results.recommendations.map(rec => ({
-            title: rec,
-            content: ""
-          }))}
+          recommendations={results.recommendations}
         />
 
         {/* AI-Powered Recommendations Section */}

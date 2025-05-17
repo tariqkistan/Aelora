@@ -2,9 +2,25 @@
  * API client for interacting with the backend
  */
 
-// Always use the local Next.js API route which will proxy to AWS when needed
-const API_URL = '/api';
-const API_TIMEOUT = 30000; // 30 seconds timeout for API calls
+// Configuration options - can be changed based on environment
+const CONFIG = {
+  // Use direct AWS API Gateway or Next.js proxy
+  useDirectApi: false,
+  
+  // API endpoints
+  nextJsApiUrl: '/api',
+  awsApiUrl: process.env.NEXT_PUBLIC_AWS_API_URL || 'https://your-api-gateway-id.execute-api.us-east-1.amazonaws.com/prod',
+  
+  // Timeout for API calls
+  timeoutMs: 30000 // 30 seconds timeout for API calls
+};
+
+/**
+ * Get the appropriate API base URL based on configuration
+ */
+function getApiBaseUrl(): string {
+  return CONFIG.useDirectApi ? CONFIG.awsApiUrl : CONFIG.nextJsApiUrl;
+}
 
 /**
  * Analyze a URL for AI visibility optimization
@@ -13,14 +29,15 @@ export async function analyzeUrl(url: string): Promise<any> {
   try {
     console.log(`Analyzing URL: ${url}`);
     
-    // Determine the endpoint
-    const endpoint = `${API_URL}/analyze?url=${encodeURIComponent(url)}`;
+    // Determine the endpoint based on configuration
+    const apiBaseUrl = getApiBaseUrl();
+    const endpoint = `${apiBaseUrl}/analyze?url=${encodeURIComponent(url)}`;
     
     console.log(`Using endpoint: ${endpoint}`);
     
     // Create an AbortController for timeout handling
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.timeoutMs);
     
     // Make the API call with timeout
     try {
@@ -50,8 +67,8 @@ export async function analyzeUrl(url: string): Promise<any> {
       
       // Handle timeout specifically
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        console.error('API request timed out after', API_TIMEOUT / 1000, 'seconds');
-        throw new Error(`Analysis timed out after ${API_TIMEOUT / 1000} seconds. The website might be too large or our servers are busy.`);
+        console.error('API request timed out after', CONFIG.timeoutMs / 1000, 'seconds');
+        throw new Error(`Analysis timed out after ${CONFIG.timeoutMs / 1000} seconds. The website might be too large or our servers are busy.`);
       }
       
       throw fetchError;
@@ -60,4 +77,15 @@ export async function analyzeUrl(url: string): Promise<any> {
     console.error('Error analyzing URL:', error);
     throw error instanceof Error ? error : new Error('Unknown error occurred during analysis');
   }
+}
+
+/**
+ * Configure the API client
+ */
+export function configureApiClient(options: Partial<typeof CONFIG>): void {
+  Object.assign(CONFIG, options);
+  console.log('API client configured:', { 
+    useDirectApi: CONFIG.useDirectApi,
+    apiBaseUrl: getApiBaseUrl()
+  });
 } 

@@ -1,19 +1,35 @@
-// Use dynamic imports to avoid build errors when OpenRouter is not available
-let OpenRouterClient: any;
+// File: lib/aiService.ts
+// This file provides AI analysis services with dynamic imports to avoid build issues
 
-// Attempt to import OpenRouter only when needed
+// We'll use a different approach to handle the openrouter-sdk import
+let OpenRouterSDK: any = null;
+
+// Function to safely get the OpenRouter client
 async function getOpenRouterClient() {
-  if (!OpenRouterClient) {
+  // If we're in a build/compilation environment, don't try to import
+  if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('Skipping OpenRouter import during build phase');
+    return null;
+  }
+  
+  // Only attempt import if we haven't tried before
+  if (OpenRouterSDK === null) {
     try {
-      const module = await import('openrouter-sdk');
-      OpenRouterClient = module.OpenRouterClient;
-      return true;
+      // Use a "trick" to prevent webpack from trying to statically analyze this
+      const importPath = 'openrouter-sdk';
+      OpenRouterSDK = await import(/* webpackIgnore: true */ importPath).catch(() => null);
     } catch (error) {
-      console.warn('OpenRouter SDK not available:', error);
-      return false;
+      console.warn('Failed to import OpenRouter SDK:', error);
+      OpenRouterSDK = false; // Mark as attempted but failed
     }
   }
-  return !!OpenRouterClient;
+  
+  // Return the client if available
+  if (OpenRouterSDK && OpenRouterSDK.OpenRouterClient) {
+    return OpenRouterSDK.OpenRouterClient;
+  }
+  
+  return null;
 }
 
 /**
@@ -21,20 +37,21 @@ async function getOpenRouterClient() {
  */
 export async function analyzeContentWithAI(content: string, url: string): Promise<any> {
   try {
-    // Check if OpenRouter is available
-    const isOpenRouterAvailable = await getOpenRouterClient();
-    
-    if (!isOpenRouterAvailable) {
-      console.warn('OpenRouter SDK not available, returning mock analysis');
-      return generateMockAnalysis(content, url);
-    }
-    
+    // Don't even try if OPENROUTER_API_KEY is not set
     if (!process.env.OPENROUTER_API_KEY) {
       console.warn('OPENROUTER_API_KEY not set, returning mock analysis');
       return generateMockAnalysis(content, url);
     }
     
-    // Initialize client only when needed
+    // Try to get the OpenRouter client
+    const OpenRouterClient = await getOpenRouterClient();
+    
+    if (!OpenRouterClient) {
+      console.warn('OpenRouter SDK not available, returning mock analysis');
+      return generateMockAnalysis(content, url);
+    }
+    
+    // Initialize client
     const client = new OpenRouterClient({
       apiKey: process.env.OPENROUTER_API_KEY || '',
       applicationId: 'Aelora',
@@ -129,20 +146,21 @@ export async function analyzeContentWithAI(content: string, url: string): Promis
  */
 export async function generateSuggestions(analysisResult: any, content: string, url: string): Promise<any> {
   try {
-    // Check if OpenRouter is available
-    const isOpenRouterAvailable = await getOpenRouterClient();
-    
-    if (!isOpenRouterAvailable) {
-      console.warn('OpenRouter SDK not available, returning mock suggestions');
-      return generateMockSuggestions(analysisResult, url);
-    }
-    
+    // Don't even try if OPENROUTER_API_KEY is not set
     if (!process.env.OPENROUTER_API_KEY) {
       console.warn('OPENROUTER_API_KEY not set, returning mock suggestions');
       return generateMockSuggestions(analysisResult, url);
     }
     
-    // Initialize client only when needed
+    // Try to get the OpenRouter client
+    const OpenRouterClient = await getOpenRouterClient();
+    
+    if (!OpenRouterClient) {
+      console.warn('OpenRouter SDK not available, returning mock suggestions');
+      return generateMockSuggestions(analysisResult, url);
+    }
+    
+    // Initialize client
     const client = new OpenRouterClient({
       apiKey: process.env.OPENROUTER_API_KEY || '',
       applicationId: 'Aelora',
@@ -336,4 +354,4 @@ function generateMockSuggestions(analysisResult: any, url: string): any {
       }
     ]
   };
-} 
+}

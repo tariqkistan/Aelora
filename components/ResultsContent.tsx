@@ -112,92 +112,16 @@ export default function ResultsContent() {
       try {
         setLoading(true)
         
-        // Extract NODE_ENV once to avoid duplications
-        const nodeEnv = process.env.NODE_ENV;
-        
-        // Always try to fetch real data from the API first
+        console.log("Fetching data from AWS API...")
         try {
-          console.log("Fetching real data from API...")
           const result = await analyzeUrl(url)
           console.log("API returned:", result)
           setResults(result)
           setLoading(false)
-          return
         } catch (apiError) {
           console.error("API call failed:", apiError)
-          
-          // In production, show error since we can't use mock data
-          if (nodeEnv === 'production') {
-            setError("Failed to analyze URL. Our servers might be busy, please try again later.")
-            setLoading(false)
-            return
-          }
-          
-          console.log("Falling back to mock data in development environment")
-        }
-        
-        // For development only, generate mock data if API fails
-        if (nodeEnv === 'development' || nodeEnv === 'test') {
-          console.log("Generating mock data...")
-          setTimeout(() => {
-            const mockData: AnalysisResult = {
-              url: url,
-              timestamp: new Date().toISOString(),
-              scores: {
-                readability: Math.floor(Math.random() * 30) + 70,
-                schema: Math.floor(Math.random() * 40) + 60,
-                questionAnswerMatch: Math.floor(Math.random() * 20) + 80,
-                headingsStructure: Math.floor(Math.random() * 25) + 75,
-                overallScore: Math.floor(Math.random() * 25) + 75,
-                contentDepth: Math.floor(Math.random() * 25) + 70,
-                keywordOptimization: Math.floor(Math.random() * 30) + 65
-              },
-              recommendations: [
-                "Add more structured data using Schema.org markup",
-                "Improve content organization with clear headings and subheadings",
-                "Include more concise answers to common questions in your niche",
-                "Use shorter paragraphs and sentences to improve readability",
-                "Add more descriptive meta tags and image alt text"
-              ],
-              details: {
-                wordCount: 1250,
-                hasSchema: false,
-                headingCount: 8,
-                imageCount: 3,
-                imageAltTextRate: 75,
-                readabilityMetrics: {
-                  sentenceLength: 18.5,
-                  wordLength: 4.8,
-                  fleschKincaidGrade: 9.2,
-                  smogIndex: 8.5,
-                  colemanLiauIndex: 10.1
-                },
-                headingAnalysis: {
-                  hasProperHierarchy: true,
-                  nestedStructureScore: 25,
-                  keywordInHeadings: 60
-                },
-                schemaDetails: {
-                  types: [],
-                  isValid: false,
-                  completeness: 0
-                },
-                faqCount: 2,
-                paragraphCount: 15,
-                keywordsFound: ["example", "keyword", "content", "analysis", "optimization"],
-                contentToCodeRatio: 0.25,
-                listsAndTables: 3
-              },
-              performance: {
-                fetchTimeMs: 1200,
-                analysisTimeMs: 800,
-                totalTimeMs: 2000
-              }
-            }
-            
-            setResults(mockData)
-            setLoading(false)
-          }, 2000)
+          setError("Failed to analyze URL. Please try again later.")
+          setLoading(false)
         }
       } catch (err) {
         console.error("Error fetching results:", err)

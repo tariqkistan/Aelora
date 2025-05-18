@@ -9,7 +9,7 @@ const CONFIG = {
   
   // API endpoints
   nextJsApiUrl: '/api',
-  awsApiUrl: process.env.NEXT_PUBLIC_AWS_API_URL || 'https://your-api-gateway-id.execute-api.us-east-1.amazonaws.com/prod',
+  awsApiUrl: process.env.NEXT_PUBLIC_AWS_API_URL || 'https://fcfz0pijd5.execute-api.us-east-1.amazonaws.com/prod',
   
   // Timeout for API calls
   timeoutMs: 30000 // 30 seconds timeout for API calls

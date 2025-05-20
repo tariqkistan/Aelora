@@ -13,7 +13,9 @@ interface AIAnalysisResult {
   suggestions: Array<{
     title: string;
     description: string;
-    priority: string;
+    rationale: string;
+    example: string;
+    expected_impact: string;
   }>;
 }
 
@@ -129,22 +131,30 @@ function generateMockAnalysis(url: string): AIAnalysisResult {
       {
         title: "Add Clear Question-Answer Pairs",
         description: "Include direct questions followed by concise answers to improve AI discoverability.",
-        priority: "high"
+        rationale: "AI systems are particularly good at identifying and extracting question-answer pairs, which helps them serve your content for relevant queries.",
+        example: "H2: Can warehouse racking be customized?\nAnswer: Yes, our warehouse racking systems can be fully customized to your specific requirements, including dimensions, weight capacity, and configuration.",
+        expected_impact: "Higher chance of appearing in AI search results for question-based queries."
       },
       {
         title: "Improve Heading Structure",
         description: "Use more descriptive H2 and H3 headings that match likely user queries.",
-        priority: "medium"
+        rationale: "Clear, descriptive headings help AI understand content organization and identify the most relevant sections.",
+        example: "Instead of 'Our Products', use 'Warehouse Racking Systems: Types, Prices & Installation'",
+        expected_impact: "Better content understanding by AI and improved semantic matching to search queries."
       },
       {
         title: "Enhance Schema Markup",
         description: "Add structured data to help AI systems understand the content's purpose and organization.",
-        priority: "high"
+        rationale: "Schema markup provides explicit signals to AI about what your content represents.",
+        example: "Add Product, FAQPage, or Service schema to your key pages with all recommended properties filled in.",
+        expected_impact: "Improved AI understanding of page content and purpose, potentially leading to rich results."
       },
       {
         title: "Include More Specific Examples",
         description: "Provide concrete examples and use cases to illustrate abstract concepts.",
-        priority: "medium"
+        rationale: "Specific examples make content more accessible to both humans and AI systems.",
+        example: "Add customer success stories with specific metrics, like 'Company X increased warehouse efficiency by 35% after installing our pallet racking system.'",
+        expected_impact: "Enhanced content clarity and improved matching to specific use case queries."
       }
     ]
   };
@@ -176,7 +186,7 @@ Format your response as a JSON object with the following structure:
     {"name": "Context Completeness", "score": <number from 1-10>, "explanation": "<your explanation>"}
   ],
   "suggestions": [
-    {"title": "<suggestion title>", "description": "<detailed explanation>", "priority": "<high|medium|low>"}
+    {"title": "<suggestion title>", "description": "<concise explanation>", "rationale": "<why this helps>", "example": "<example implementation>", "expected_impact": "<expected impact>"}
   ]
 }`;
 }

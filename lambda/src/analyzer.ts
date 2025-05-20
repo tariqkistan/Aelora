@@ -48,14 +48,14 @@ export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
   console.log('Performing basic content analysis');
   const basicAnalysis = performBasicAnalysis(extractedContent);
   
-  // Step 4: Perform AI-powered analysis if OpenRouter API key is available
+  // Step 4: Perform AI-powered analysis if OpenAI API key is available
   let aiAnalysis = null;
   let aiRecommendations = null;
   let aiScore = 0;
   
-  if (process.env.OPENROUTER_API_KEY) {
+  if (process.env.OPENAI_API_KEY) {
     try {
-      console.log('Performing AI-powered analysis');
+      console.log('Performing AI-powered analysis with OpenAI');
       
       // Use AI to analyze the content
       const aiResult = await analyzeWithAI(extractedContent.mainContent, url);
@@ -72,7 +72,7 @@ export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
       // Continue with only basic analysis if AI fails
     }
   } else {
-    console.log('OPENROUTER_API_KEY not set, skipping AI analysis');
+    console.log('OPENAI_API_KEY not set, skipping AI analysis');
   }
   
   // Step 5: Calculate overall score using AI and basic scores

@@ -1,5 +1,6 @@
 import { JSDOM } from 'jsdom';
 import { analyzeWithAI } from './ai-service';
+import { extractPriorityContent, ExtractedContent } from './content-extractor';
 
 interface AnalysisResult {
   url: string;
@@ -25,6 +26,14 @@ interface AnalysisResult {
       wordLength: number;
     };
     aiAnalysis?: any;
+    contentType?: string;
+    industry?: string;
+    extractedContent?: ExtractedContent;
+  };
+  performance?: {
+    fetchTimeMs: number;
+    analysisTimeMs: number;
+    totalTimeMs: number;
   };
 }
 
@@ -32,53 +41,69 @@ interface AnalysisResult {
  * Analyze a website by fetching and processing its content
  */
 export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
+  const startTime = Date.now();
+  
   // Step 1: Fetch website content
   console.log(`Fetching content from ${url}`);
+  const fetchStartTime = Date.now();
   const content = await fetchContent(url);
+  const fetchTime = Date.now() - fetchStartTime;
   
   if (!content) {
     throw new Error(`Failed to fetch content from ${url}`);
   }
   
-  // Step 2: Extract structured content from HTML
-  console.log('Extracting content structure');
-  const extractedContent = extractContent(content);
+  // Step 2: Smart content extraction (NEW)
+  console.log('Extracting priority content for analysis');
+  const extractedContent = extractPriorityContent(content, url);
+  console.log(`Extracted ${extractedContent.wordCount} priority words from ${extractedContent.contentType} content`);
   
-  // Step 3: Perform basic content analysis
+  // Step 3: Extract structured content from HTML (for basic analysis)
+  console.log('Extracting content structure for basic metrics');
+  const legacyContent = extractContent(content);
+  
+  // Step 4: Perform basic content analysis
   console.log('Performing basic content analysis');
-  const basicAnalysis = performBasicAnalysis(extractedContent);
+  const basicAnalysis = performBasicAnalysis(legacyContent);
   
-  // Step 4: Perform AI-powered analysis if OpenAI API key is available
+  // Step 5: Perform enhanced AI-powered analysis
   let aiAnalysis = null;
   let aiRecommendations = null;
   let aiScore = 0;
+  let quickWins = null;
+  
+  const analysisStartTime = Date.now();
   
   if (process.env.OPENAI_API_KEY) {
     try {
-      console.log('Performing AI-powered analysis with OpenAI');
+      console.log(`Performing enhanced AI analysis for ${extractedContent.contentType} content`);
       
-      // Use AI to analyze the content
-      const aiResult = await analyzeWithAI(extractedContent.mainContent, url);
+      // Use enhanced AI analysis with smart content extraction
+      const aiResult = await analyzeWithAI(extractedContent, url);
       
       // Set AI analysis data if available
       if (aiResult) {
         aiAnalysis = aiResult.areas;
         aiRecommendations = aiResult.suggestions;
+        quickWins = aiResult.quick_wins;
         aiScore = Math.min(100, Math.max(0, aiResult.overall_score * 10));
-        console.log(`AI analysis completed with score: ${aiScore}`);
+        console.log(`Enhanced AI analysis completed with score: ${aiScore} for ${aiResult.industry} ${aiResult.content_type}`);
       }
     } catch (error) {
-      console.error('Error in AI analysis:', error);
+      console.error('Error in enhanced AI analysis:', error);
       // Continue with only basic analysis if AI fails
     }
   } else {
     console.log('OPENAI_API_KEY not set, skipping AI analysis');
   }
   
-  // Step 5: Calculate overall score using AI and basic scores
+  const analysisTime = Date.now() - analysisStartTime;
+  const totalTime = Date.now() - startTime;
+  
+  // Step 6: Calculate overall score using AI and basic scores
   const overallScore = calculateOverallScore(basicAnalysis.scores, aiScore);
   
-  // Step 6: Return combined results
+  // Step 7: Return enhanced results
   return {
     url,
     timestamp: new Date().toISOString(),
@@ -91,7 +116,15 @@ export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
     aiRecommendations: aiRecommendations || undefined,
     details: {
       ...basicAnalysis.details,
-      aiAnalysis: aiAnalysis || undefined
+      aiAnalysis: aiAnalysis || undefined,
+      contentType: extractedContent.contentType,
+      industry: aiAnalysis ? (aiAnalysis as any).industry : undefined,
+      extractedContent: extractedContent // Include for debugging/future use
+    },
+    performance: {
+      fetchTimeMs: fetchTime,
+      analysisTimeMs: analysisTime,
+      totalTimeMs: totalTime
     }
   };
 }

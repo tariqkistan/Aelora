@@ -29,6 +29,12 @@ interface AnalysisResult {
     rationale: string
     example: string
     expected_impact: string
+    priority?: 'high' | 'medium' | 'low'
+  }[]
+  quickWins?: {
+    action: string
+    impact: string
+    effort: 'low' | 'medium' | 'high'
   }[]
   details?: {
     wordCount: number
@@ -85,6 +91,8 @@ interface AnalysisResult {
         recommendations: string[]
       }
     }
+    contentType?: string
+    industry?: string
   }
   performance?: {
     fetchTimeMs: number
@@ -99,6 +107,27 @@ export default function ResultsContent() {
   const [loading, setLoading] = useState(true)
   const [results, setResults] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Export functionality
+  const exportResults = () => {
+    if (!results) return
+    
+    const exportData = {
+      ...results,
+      exportedAt: new Date().toISOString(),
+      exportedBy: 'Aelora AI Search Optimizer'
+    }
+    
+    const dataStr = JSON.stringify(exportData, null, 2)
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
+    
+    const exportFileDefaultName = `aelora-analysis-${new URL(results.url).hostname}-${new Date().toISOString().split('T')[0]}.json`
+    
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+  }
 
   useEffect(() => {
     if (!url) {
@@ -175,6 +204,16 @@ export default function ResultsContent() {
           <p className="text-muted-foreground mt-2">
             URL: <span className="font-medium">{results.url}</span>
           </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+            <Button onClick={exportResults} variant="outline">
+              📊 Export Results
+            </Button>
+            <Button asChild>
+              <Link href="/analyzer">
+                🔍 Analyze Another URL
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -193,6 +232,64 @@ export default function ResultsContent() {
               description="AI-powered evaluation of your content"
               isPrimary
             />
+          )}
+          
+          {/* Performance Metrics Card */}
+          {results.performance && (
+            <div className="col-span-1 md:col-span-2">
+              <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                <h3 className="text-lg font-semibold mb-4">Analysis Performance</h3>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {results.performance.fetchTimeMs}ms
+                    </div>
+                    <div className="text-sm text-muted-foreground">Fetch Time</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">
+                      {results.performance.analysisTimeMs}ms
+                    </div>
+                    <div className="text-sm text-muted-foreground">Analysis Time</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-purple-600">
+                      {results.performance.totalTimeMs}ms
+                    </div>
+                    <div className="text-sm text-muted-foreground">Total Time</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Content Type & Industry Detection */}
+          {results.details?.contentType && (
+            <div className="col-span-1 md:col-span-2">
+              <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                <h3 className="text-lg font-semibold mb-4">Content Analysis</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <div className="text-sm text-muted-foreground">Content Type</div>
+                    <div className="font-medium capitalize">{results.details.contentType}</div>
+                  </div>
+                  {results.details.industry && (
+                    <div>
+                      <div className="text-sm text-muted-foreground">Industry</div>
+                      <div className="font-medium">{results.details.industry}</div>
+                    </div>
+                  )}
+                  <div>
+                    <div className="text-sm text-muted-foreground">Word Count</div>
+                    <div className="font-medium">{results.details.wordCount}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Headings</div>
+                    <div className="font-medium">{results.details.headingCount}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
           
           <ScoreCard 
@@ -364,27 +461,6 @@ export default function ResultsContent() {
                   </div>
                 </div>
               )}
-              
-              {/* Performance */}
-              {results.performance && (
-                <div>
-                  <h4 className="font-medium text-lg mb-2">Analysis Performance</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-muted/40 p-3 rounded">
-                      <p className="text-sm text-muted-foreground">Fetch Time</p>
-                      <p className="font-semibold">{(results.performance.fetchTimeMs / 1000).toFixed(2)}s</p>
-                    </div>
-                    <div className="bg-muted/40 p-3 rounded">
-                      <p className="text-sm text-muted-foreground">Analysis Time</p>
-                      <p className="font-semibold">{(results.performance.analysisTimeMs / 1000).toFixed(2)}s</p>
-                    </div>
-                    <div className="bg-muted/40 p-3 rounded">
-                      <p className="text-sm text-muted-foreground">Total Time</p>
-                      <p className="font-semibold">{(results.performance.totalTimeMs / 1000).toFixed(2)}s</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -401,7 +477,18 @@ export default function ResultsContent() {
             <div className="space-y-6">
               {results.aiRecommendations.map((rec, idx) => (
                 <div key={idx} className="bg-muted/50 p-6 rounded-lg">
-                  <h3 className="text-xl font-semibold mb-2">{rec.title}</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl font-semibold">{rec.title}</h3>
+                    {rec.priority && (
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        rec.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {rec.priority} priority
+                      </span>
+                    )}
+                  </div>
                   <p className="mb-3">{rec.description}</p>
                   
                   <div className="mt-3 pt-3 border-t border-border">
@@ -415,6 +502,35 @@ export default function ResultsContent() {
                     
                     <h4 className="font-medium text-sm text-muted-foreground mb-1">Expected Impact:</h4>
                     <p className="text-sm">{rec.expected_impact}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Quick Wins Section */}
+        {results.quickWins && results.quickWins.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">🚀 Quick Wins</h2>
+            <p className="text-muted-foreground mb-6">
+              Simple actions you can take right now to improve your AI search visibility
+            </p>
+            <div className="grid gap-4">
+              {results.quickWins.map((win, idx) => (
+                <div key={idx} className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-4 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-green-800 mb-2">{win.action}</h3>
+                      <p className="text-green-700 text-sm mb-2">{win.impact}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ml-4 ${
+                      win.effort === 'low' ? 'bg-green-100 text-green-800' :
+                      win.effort === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {win.effort} effort
+                    </span>
                   </div>
                 </div>
               ))}

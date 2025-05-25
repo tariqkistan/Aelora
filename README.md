@@ -11,12 +11,29 @@ Aelora is a SaaS tool that analyzes website content and helps businesses improve
 ## Tech Stack
 
 - **Frontend**: Next.js 14 (App Router) with Tailwind CSS and shadcn/ui
-- **Backend**: AWS (Lambda, API Gateway, DynamoDB or RDS, S3)
+- **Backend**: AWS (Lambda, API Gateway, DynamoDB)
 - **Language**: TypeScript
-- **Deployment**: AWS Amplify or Vercel
-- **AI**: Claude or OpenAI for content analysis logic
+- **Deployment**: Vercel (frontend) and AWS Lambda (backend)
+- **AI**: OpenAI GPT-4 for content analysis logic
 
-## Getting Started
+## Project Structure
+
+```
+aelora/
+├── app/ - Next.js app router pages
+│   ├── api/ - API routes (proxy to AWS)
+│   ├── analyzer/ - Analyzer page
+│   ├── results/ - Results page
+│   └── page.tsx - Homepage
+├── components/ - UI Components
+├── lambda/ - AWS Lambda functions
+│   ├── src/ - TypeScript source code
+│   ├── build.sh - Build script
+│   └── deploy.sh - Deployment script
+└── lib/ - Utility functions
+```
+
+## Setting Up the Frontend
 
 ### Prerequisites
 
@@ -34,77 +51,92 @@ Aelora is a SaaS tool that analyzes website content and helps businesses improve
 2. Install dependencies
    ```
    npm install
-   # or
-   yarn
    ```
 
 3. Create a `.env.local` file in the root directory with the following variables:
    ```
-   # AWS Configuration
-   AWS_REGION=us-east-1
-   AWS_ACCESS_KEY_ID=your-access-key-id
-   AWS_SECRET_ACCESS_KEY=your-secret-access-key
-
-   # API Endpoints
-   NEXT_PUBLIC_API_URL=http://localhost:3000/api
-
-   # AI Provider (OpenAI or Claude)
-   OPENAI_API_KEY=your-openai-api-key
-   ANTHROPIC_API_KEY=your-anthropic-api-key
-
-   # Database
-   DYNAMODB_TABLE_NAME=aelora-analysis-history
+   # AWS API Gateway URL
+   NEXT_PUBLIC_AWS_API_URL=https://your-api-gateway-id.execute-api.us-east-1.amazonaws.com/prod
    ```
 
 4. Run the development server
    ```
    npm run dev
-   # or
-   yarn dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-## Project Structure
+## Setting Up the Lambda Backend
 
-```
-aelora/
-├── app/ - Next.js app router pages
-│   ├── api/ - API routes
-│   │   └── analyze/ - Analysis API endpoint
-│   ├── analyzer/ - Analyzer page
-│   ├── results/ - Results page
-│   └── page.tsx - Homepage
-├── components/ - UI Components
-│   ├── ui/ - shadcn/ui components
-│   ├── Navbar.tsx - Navigation component
-│   ├── Footer.tsx - Footer component
-│   ├── InputForm.tsx - URL input form
-│   ├── ScoreCard.tsx - Score display component
-│   ├── ReportCard.tsx - Recommendations display
-│   └── Loader.tsx - Loading indicator
-├── lib/ - Utility functions
-│   ├── contentFetcher.ts - URL content fetching
-│   ├── contentAnalyzer.ts - Content analysis logic
-│   └── utils.ts - Utility functions
-└── public/ - Static assets
-```
+### Prerequisites
 
-## AWS Infrastructure (Planned)
+- AWS CLI installed and configured
+- Node.js 18.x or later
+- npm or yarn
 
-- AWS Lambda function for content analysis
-- API Gateway endpoint for the Lambda function
-- DynamoDB for storing analysis history
-- S3 for storing uploaded reports or snapshots
-- IAM roles and policies for secure access
+### Deployment Steps
+
+1. Navigate to the Lambda directory
+   ```
+   cd lambda
+   ```
+
+2. Install dependencies
+   ```
+   npm install
+   ```
+
+3. Build and package the Lambda function
+   ```
+   ./build.sh
+   ```
+   This will create a `function.zip` file containing the compiled code and dependencies.
+
+4. Deploy the function to AWS Lambda
+   ```
+   ./deploy.sh YOUR_LAMBDA_FUNCTION_NAME
+   ```
+   Replace `YOUR_LAMBDA_FUNCTION_NAME` with your actual Lambda function name.
+
+5. Configure Lambda environment variables in the AWS Console:
+   - `OPENAI_API_KEY`: Your OpenAI API key
+   - `DYNAMODB_TABLE_NAME`: Your DynamoDB table for storing analysis results
+
+## API Integration Options
+
+Aelora provides two options for calling the analysis API:
+
+1. **Next.js API Proxy**: The frontend calls a Next.js API route, which forwards the request to the AWS API Gateway. This is the default option.
+
+2. **Direct AWS API**: The frontend calls the AWS API Gateway directly. This can be toggled on in the UI.
+
+## Deployment
+
+### Frontend Deployment (Vercel)
+
+1. Push your code to a Git repository
+
+2. Connect your repository to Vercel
+
+3. Configure environment variables in Vercel:
+   - `NEXT_PUBLIC_AWS_API_URL`: Your AWS API Gateway URL
+
+4. Deploy
+
+### Backend Deployment (AWS Lambda)
+
+Follow the Lambda deployment steps above.
+
+## Troubleshooting
+
+If you encounter issues with the Lambda function:
+
+1. Check the CloudWatch Logs in AWS Console
+2. Verify that the handler name is set correctly to `index.handler`
+3. Ensure all environment variables are set properly
+4. Check that the correct runtime (Node.js 18.x) is selected
+5. Verify CORS headers if making requests from a browser
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details
-
-## Acknowledgments
-
-- [Next.js](https://nextjs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [shadcn/ui](https://ui.shadcn.com/)
-- [AWS](https://aws.amazon.com/) 
+This project is licensed under the MIT License - see the LICENSE file for details 

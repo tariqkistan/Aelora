@@ -11,6 +11,9 @@ import ViewModeToggle from "@/components/ViewModeToggle"
 import RecommendationMatrix from "@/components/RecommendationMatrix"
 import ScoreRadarChart from "@/components/ScoreRadarChart"
 import ContentStructureViz from "@/components/ContentStructureViz"
+import ExportManager from "@/components/ExportManager"
+import GamificationPanel from "@/components/GamificationPanel"
+import HistoricalTrends from "@/components/HistoricalTrends"
 import { useViewMode } from "@/components/ViewModeProvider"
 import Loader from "@/components/Loader"
 import { analyzeUrl } from "@/lib/apiClient"
@@ -183,6 +186,61 @@ export default function EnhancedResultsContent() {
     questionAnswerMatch: 70,
     headingsStructure: 80,
     overallScore: 72
+  }
+
+  // Sample historical data for demonstration
+  const sampleHistoricalData = [
+    {
+      date: '2024-01-15',
+      overallScore: 65,
+      readability: 70,
+      schema: 45,
+      questionAnswerMatch: 60,
+      headingsStructure: 75,
+      url: 'example.com/page1',
+      improvements: ['Added meta description', 'Improved headings']
+    },
+    {
+      date: '2024-01-20',
+      overallScore: 72,
+      readability: 75,
+      schema: 55,
+      questionAnswerMatch: 68,
+      headingsStructure: 80,
+      url: 'example.com/page2',
+      improvements: ['Added schema markup']
+    },
+    {
+      date: '2024-01-25',
+      overallScore: results.scores.overallScore,
+      readability: results.scores.readability,
+      schema: results.scores.schema,
+      questionAnswerMatch: results.scores.questionAnswerMatch,
+      headingsStructure: results.scores.headingsStructure,
+      url: results.url,
+      improvements: []
+    }
+  ]
+
+  // Sample user stats for gamification
+  const sampleUserStats = {
+    totalAnalyses: 3,
+    averageScore: 69,
+    bestScore: Math.max(results.scores.overallScore, 72),
+    improvementStreak: results.scores.overallScore > 72 ? 1 : 0,
+    lastAnalysisDate: new Date().toISOString(),
+    totalImprovements: 3,
+    quickWinsCompleted: 5
+  }
+
+  // Export data structure
+  const exportData = {
+    url: results.url,
+    timestamp: results.timestamp,
+    scores: results.scores,
+    recommendations: results.recommendations,
+    quickWins: results.quickWins,
+    details: results.details
   }
 
   return (
@@ -587,6 +645,41 @@ export default function EnhancedResultsContent() {
           </CollapsibleSection>
         )}
 
+        {/* Gamification Panel - Expert Mode */}
+        {isExpertMode && (
+          <CollapsibleSection
+            title="Progress & Achievements"
+            description="Track your optimization journey"
+          >
+            <GamificationPanel
+              currentScore={results.scores.overallScore}
+              previousScore={72} // Sample previous score
+              userStats={sampleUserStats}
+            />
+          </CollapsibleSection>
+        )}
+
+        {/* Historical Trends - Expert Mode */}
+        {isExpertMode && (
+          <CollapsibleSection
+            title="Historical Trends"
+            description="Track your progress over time"
+          >
+            <HistoricalTrends
+              data={sampleHistoricalData}
+              currentScore={results.scores.overallScore}
+            />
+          </CollapsibleSection>
+        )}
+
+        {/* Export & Sharing */}
+        <CollapsibleSection
+          title="Export & Share"
+          description="Save and share your analysis results"
+        >
+          <ExportManager data={exportData} />
+        </CollapsibleSection>
+
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t">
           <Link href="/analyzer" className="flex-1">
@@ -594,8 +687,12 @@ export default function EnhancedResultsContent() {
               Analyze Another URL
             </Button>
           </Link>
-          <Button className="flex-1">
-            Export Report
+          <Button 
+            onClick={() => window.location.reload()}
+            variant="secondary" 
+            className="flex-1"
+          >
+            Re-analyze This URL
           </Button>
         </div>
       </div>

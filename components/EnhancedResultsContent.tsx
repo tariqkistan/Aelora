@@ -8,6 +8,9 @@ import EnhancedScoreCard from "@/components/EnhancedScoreCard"
 import ReportCard from "@/components/ReportCard"
 import CollapsibleSection from "@/components/CollapsibleSection"
 import ViewModeToggle from "@/components/ViewModeToggle"
+import RecommendationMatrix from "@/components/RecommendationMatrix"
+import ScoreRadarChart from "@/components/ScoreRadarChart"
+import ContentStructureViz from "@/components/ContentStructureViz"
 import { useViewMode } from "@/components/ViewModeProvider"
 import Loader from "@/components/Loader"
 import { analyzeUrl } from "@/lib/apiClient"
@@ -315,6 +318,69 @@ export default function EnhancedResultsContent() {
           </div>
         </CollapsibleSection>
 
+        {/* Score Visualization - Expert Mode */}
+        {isExpertMode && (
+          <CollapsibleSection
+            title="Score Visualization"
+            description="Multi-dimensional performance overview"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Radar Chart */}
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Performance Radar</h4>
+                <ScoreRadarChart
+                  scores={[
+                    { label: 'Readability', score: results.scores.readability, maxScore: 100 },
+                    { label: 'Schema', score: results.scores.schema, maxScore: 100 },
+                    { label: 'Q&A Match', score: results.scores.questionAnswerMatch, maxScore: 100 },
+                    { label: 'Headings', score: results.scores.headingsStructure, maxScore: 100 },
+                    ...(results.scores.contentDepth !== undefined ? [{ label: 'Content Depth', score: results.scores.contentDepth, maxScore: 100 }] : []),
+                    ...(results.scores.keywordOptimization !== undefined ? [{ label: 'Keywords', score: results.scores.keywordOptimization, maxScore: 100 }] : [])
+                  ]}
+                  size={280}
+                />
+              </div>
+
+              {/* Content Structure Visualization */}
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Content Structure</h4>
+                <ContentStructureViz
+                  structure={[
+                    {
+                      id: 'h1-1',
+                      type: 'h1',
+                      text: 'Main Title',
+                      hasKeywords: true,
+                      children: [
+                        {
+                          id: 'h2-1',
+                          type: 'h2',
+                          text: 'Introduction',
+                          hasKeywords: false,
+                          children: [
+                            { id: 'content-1', type: 'content', text: 'Opening paragraph', wordCount: 45 },
+                            { id: 'image-1', type: 'image', text: 'Hero image' }
+                          ]
+                        },
+                        {
+                          id: 'h2-2',
+                          type: 'h2',
+                          text: 'Main Content',
+                          hasKeywords: true,
+                          children: [
+                            { id: 'content-2', type: 'content', text: 'Main content block', wordCount: 120 },
+                            { id: 'list-1', type: 'list', text: 'Feature list' }
+                          ]
+                        }
+                      ]
+                    }
+                  ]}
+                />
+              </div>
+            </div>
+          </CollapsibleSection>
+        )}
+
         {/* Recommendations */}
         <CollapsibleSection
           title="Recommendations"
@@ -322,14 +388,86 @@ export default function EnhancedResultsContent() {
           badge={isSimpleMode ? topRecommendations.length : results.recommendations.length}
           description="Actionable improvements"
         >
-          <ReportCard
-            title=""
-            recommendations={isSimpleMode ? topRecommendations : results.recommendations}
-          />
-          {isSimpleMode && results.recommendations.length > 3 && (
-            <p className="text-sm text-muted-foreground mt-4">
-              Switch to Expert mode to see {results.recommendations.length - 3} more recommendations
-            </p>
+          {isExpertMode ? (
+            <RecommendationMatrix
+              recommendations={[
+                {
+                  id: '1',
+                  title: 'Add Meta Description',
+                  description: 'Create compelling meta descriptions for better AI search visibility',
+                  impact: 'high',
+                  effort: 'low',
+                  category: 'technical',
+                  estimatedTimeHours: 1,
+                  potentialScoreIncrease: 8
+                },
+                {
+                  id: '2',
+                  title: 'Improve Heading Structure',
+                  description: 'Reorganize headings to follow proper H1-H6 hierarchy',
+                  impact: 'medium',
+                  effort: 'medium',
+                  category: 'structure',
+                  estimatedTimeHours: 3,
+                  potentialScoreIncrease: 5
+                },
+                {
+                  id: '3',
+                  title: 'Add Schema Markup',
+                  description: 'Implement structured data for better AI understanding',
+                  impact: 'high',
+                  effort: 'high',
+                  category: 'technical',
+                  estimatedTimeHours: 8,
+                  potentialScoreIncrease: 12
+                },
+                {
+                  id: '4',
+                  title: 'Optimize Content Length',
+                  description: 'Expand thin content sections to provide more value',
+                  impact: 'medium',
+                  effort: 'high',
+                  category: 'content',
+                  estimatedTimeHours: 6,
+                  potentialScoreIncrease: 7
+                },
+                {
+                  id: '5',
+                  title: 'Add FAQ Section',
+                  description: 'Create FAQ section to answer common user questions',
+                  impact: 'high',
+                  effort: 'medium',
+                  category: 'ai',
+                  estimatedTimeHours: 4,
+                  potentialScoreIncrease: 10
+                },
+                {
+                  id: '6',
+                  title: 'Improve Readability',
+                  description: 'Simplify complex sentences and improve text flow',
+                  impact: 'low',
+                  effort: 'low',
+                  category: 'content',
+                  estimatedTimeHours: 2,
+                  potentialScoreIncrease: 3
+                }
+              ]}
+              onRecommendationClick={(rec) => {
+                console.log('Clicked recommendation:', rec.title)
+              }}
+            />
+          ) : (
+            <>
+              <ReportCard
+                title=""
+                recommendations={topRecommendations}
+              />
+              {results.recommendations.length > 3 && (
+                <p className="text-sm text-muted-foreground mt-4">
+                  Switch to Expert mode to see {results.recommendations.length - 3} more recommendations and interactive prioritization
+                </p>
+              )}
+            </>
           )}
         </CollapsibleSection>
 

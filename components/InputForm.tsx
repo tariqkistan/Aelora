@@ -36,8 +36,8 @@ export default function InputForm() {
       const urlObj = new URL(formattedUrl)
       setIsLoading(true)
       
-      // Redirect to the results page with the URL
-      router.push(`/results?url=${encodeURIComponent(formattedUrl)}`)
+      // Redirect to the enhanced results page with the URL
+      router.push(`/results/enhanced?url=${encodeURIComponent(formattedUrl)}`)
     } catch (err) {
       setError("Please enter a valid URL")
       setIsLoading(false)

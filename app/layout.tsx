@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { ViewModeProvider } from '@/components/ViewModeProvider'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
@@ -21,13 +22,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="flex flex-col min-h-screen">
-            <Navbar />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <ViewModeProvider>
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
+              <main className="flex-grow">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </ViewModeProvider>
         </ThemeProvider>
       </body>
     </html>

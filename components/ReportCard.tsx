@@ -1,17 +1,19 @@
 "use client"
 
 interface ReportCardProps {
-  title: string
-  recommendations: string[]
+  report: {
+    title: string
+    recommendations: string[]
+  }
 }
 
-export default function ReportCard({ title, recommendations }: ReportCardProps) {
+export default function ReportCard({ report }: ReportCardProps) {
   return (
     <div className="rounded-lg border p-6 shadow-sm">
-      <h3 className="text-xl font-semibold mb-4">{title}</h3>
+      <h3 className="text-xl font-semibold mb-4">{report.title}</h3>
       
       <ul className="space-y-3">
-        {recommendations.map((rec, index) => (
+        {report.recommendations.map((rec, index) => (
           <li key={index} className="flex items-start gap-2">
             <div className="mt-1 h-5 w-5 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
               <svg

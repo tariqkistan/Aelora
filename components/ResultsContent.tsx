@@ -12,6 +12,9 @@ import MiniChart from "@/components/MiniChart"
 import InteractiveDashboard from "@/components/InteractiveDashboard"
 import ComparisonView from "@/components/ComparisonView"
 import RealTimeAnalytics from "@/components/RealTimeAnalytics"
+import AdvancedFilters from "@/components/AdvancedFilters"
+import FilteredResultsView from "@/components/FilteredResultsView"
+import AdvancedAnalytics from "@/components/AdvancedAnalytics"
 import Loader from "@/components/Loader"
 import { analyzeUrl } from "@/lib/apiClient"
 
@@ -123,6 +126,19 @@ export default function ResultsContent() {
   const [results, setResults] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeView, setActiveView] = useState('overview')
+  const [filters, setFilters] = useState({
+    searchQuery: '',
+    scoreRange: [0, 100] as [number, number],
+    priority: [] as string[],
+    categories: [] as string[],
+    dateRange: 'all',
+    sortBy: 'relevance',
+    sortOrder: 'desc' as 'asc' | 'desc'
+  })
+
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters)
+  }
 
   // Export functionality
   const exportResults = () => {
@@ -295,12 +311,14 @@ export default function ResultsContent() {
 
         {/* Enhanced Navigation Tabs */}
         <Tabs value={activeView} onValueChange={setActiveView} className="w-full mb-8">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="interactive">Interactive</TabsTrigger>
             <TabsTrigger value="comparison">Comparison</TabsTrigger>
             <TabsTrigger value="detailed">Detailed</TabsTrigger>
             <TabsTrigger value="real-time">Real-Time</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8">
@@ -419,6 +437,32 @@ export default function ResultsContent() {
 
           <TabsContent value="real-time" className="space-y-8">
             <RealTimeAnalytics url={results.url} initialScore={results.scores.overallScore} />
+          </TabsContent>
+
+          <TabsContent value="advanced" className="space-y-8">
+            <AdvancedFilters 
+              onFiltersChange={handleFiltersChange}
+              data={{
+                recommendations: results.aiRecommendations || [],
+                quickWins: results.quickWins || [],
+                categories: ['Content Quality', 'Technical SEO', 'User Experience', 'Performance', 'Accessibility']
+              }}
+            />
+            <FilteredResultsView 
+              recommendations={results.aiRecommendations || []}
+              quickWins={results.quickWins || []}
+              filters={filters}
+            />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-8">
+            <AdvancedAnalytics 
+              data={{
+                scores: results.scores,
+                recommendations: results.aiRecommendations || [],
+                quickWins: results.quickWins || []
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>

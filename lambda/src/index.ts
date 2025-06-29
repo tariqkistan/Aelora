@@ -5,8 +5,37 @@ import { analyzeWebsite } from './analyzer';
 
 // Initialize DynamoDB client
 const client = new DynamoDBClient({ region: process.env.AWS_REGION });
-const docClient = DynamoDBDocumentClient.from(client);
+const docClient = DynamoDBDocumentClient.from(client, {
+  marshallOptions: {
+    removeUndefinedValues: true
+  }
+});
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'aelora-analysis-history';
+
+/**
+ * Remove undefined values from an object recursively
+ */
+function removeUndefinedValues(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(removeUndefinedValues).filter(item => item !== undefined);
+  }
+  
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = removeUndefinedValues(value);
+      }
+    }
+    return cleaned;
+  }
+  
+  return obj;
+}
 
 /**
  * Main Lambda handler function for analyzing websites
@@ -45,13 +74,15 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     
     // Store the analysis result in DynamoDB
     try {
+      const cleanedResult = removeUndefinedValues({
+        id: `${url}-${Date.now()}`,
+        ...resultWithPerformance
+      });
+      
       await docClient.send(
         new PutCommand({
           TableName: TABLE_NAME,
-          Item: {
-            id: `${url}-${Date.now()}`,
-            ...resultWithPerformance
-          }
+          Item: cleanedResult
         })
       );
       console.log('Analysis result stored in DynamoDB');

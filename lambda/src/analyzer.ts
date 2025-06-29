@@ -71,6 +71,7 @@ export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
   let aiRecommendations = null;
   let aiScore = 0;
   let quickWins = null;
+  let industry = null;
   
   const analysisStartTime = Date.now();
   
@@ -86,6 +87,7 @@ export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
         aiAnalysis = aiResult.areas;
         aiRecommendations = aiResult.suggestions;
         quickWins = aiResult.quick_wins;
+        industry = aiResult.industry;
         aiScore = Math.min(100, Math.max(0, aiResult.overall_score * 10));
         console.log(`Enhanced AI analysis completed with score: ${aiScore} for ${aiResult.industry} ${aiResult.content_type}`);
       }
@@ -104,21 +106,17 @@ export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
   const overallScore = calculateOverallScore(basicAnalysis.scores, aiScore);
   
   // Step 7: Return enhanced results
-  return {
+  const result: AnalysisResult = {
     url,
     timestamp: new Date().toISOString(),
     scores: {
       ...basicAnalysis.scores,
-      overallScore,
-      aiAnalysisScore: aiScore || undefined
+      overallScore
     },
     recommendations: basicAnalysis.recommendations,
-    aiRecommendations: aiRecommendations || undefined,
     details: {
       ...basicAnalysis.details,
-      aiAnalysis: aiAnalysis || undefined,
       contentType: extractedContent.contentType,
-      industry: aiAnalysis ? (aiAnalysis as any).industry : undefined,
       extractedContent: extractedContent // Include for debugging/future use
     },
     performance: {
@@ -127,6 +125,25 @@ export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
       totalTimeMs: totalTime
     }
   };
+
+  // Add AI-specific data only if available
+  if (aiScore > 0) {
+    result.scores.aiAnalysisScore = aiScore;
+  }
+  
+  if (aiRecommendations && aiRecommendations.length > 0) {
+    result.aiRecommendations = aiRecommendations;
+  }
+  
+  if (aiAnalysis) {
+    result.details.aiAnalysis = aiAnalysis;
+  }
+  
+  if (industry) {
+    result.details.industry = industry;
+  }
+
+  return result;
 }
 
 /**

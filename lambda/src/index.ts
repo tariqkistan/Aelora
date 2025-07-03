@@ -10,7 +10,9 @@ const docClient = DynamoDBDocumentClient.from(client, {
     removeUndefinedValues: true
   }
 });
-const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'aelora-analysis-history';
+
+// Use the environment variable from CDK, fallback to default
+const TABLE_NAME = process.env.TABLE_NAME || process.env.DYNAMODB_TABLE_NAME || 'aelora-analysis-history';
 
 /**
  * Remove undefined values from an object recursively

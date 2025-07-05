@@ -1,0 +1,9 @@
+{
+  "queryStringParameters": {
+    "url": "https://www.example.com"
+  },
+  "headers": {
+    "content-type": "application/json",
+    "origin": "https://aelora-9iogr2r4v-tariqkistans-projects.vercel.app"
+  }
+} 

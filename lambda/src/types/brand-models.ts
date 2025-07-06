@@ -77,5 +77,84 @@ export interface OpenAIBrandAnalysis {
  */
 export const TABLE_NAMES = {
   BRAND_VISIBILITY_SNAPSHOTS: 'BrandVisibilitySnapshots',
-  BRAND_PROFILES: 'BrandProfiles'
-} as const; 
+  BRAND_PROFILES: 'BrandProfiles',
+  BRAND_COMPARISONS: 'BrandComparisons'
+} as const;
+
+/**
+ * Brand Comparison Result stored in DynamoDB
+ */
+export interface BrandComparison {
+  // Primary key: brandA#brandB (e.g., "Apple#Microsoft")
+  comparisonId: string;
+  
+  // Sort key: timestamp
+  timestamp: string;
+  
+  // Comparison details
+  brandA: string;
+  brandB: string;
+  industry: string;
+  
+  // Analysis results
+  brandAStrengths: string[];
+  brandAWeaknesses: string[];
+  brandBStrengths: string[];
+  brandBWeaknesses: string[];
+  
+  // GPT-4 verdict
+  verdict: string;
+  winner: string; // "brandA" | "brandB" | "tie"
+  
+  // Metadata
+  analysisDate: string;
+  confidence: number;
+  
+  // Optional fields
+  summary?: string;
+  methodology?: string;
+  
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Brand Comparison Request payload
+ */
+export interface BrandComparisonRequest {
+  brandA: string;
+  brandB: string;
+  industry: string;
+}
+
+/**
+ * Brand Comparison Response
+ */
+export interface BrandComparisonResponse {
+  success: boolean;
+  data?: BrandComparison;
+  error?: string;
+}
+
+/**
+ * GPT-4 Brand Comparison Analysis Result
+ */
+export interface GPTBrandComparisonResult {
+  brandA: {
+    name: string;
+    strengths: string[];
+    weaknesses: string[];
+  };
+  brandB: {
+    name: string;
+    strengths: string[];
+    weaknesses: string[];
+  };
+  verdict: {
+    winner: string;
+    reasoning: string;
+    confidence: number;
+  };
+  summary: string;
+} 

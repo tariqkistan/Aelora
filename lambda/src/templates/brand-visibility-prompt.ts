@@ -79,8 +79,8 @@ REQUIRED JSON OUTPUT FORMAT:
       timeframe
     } = options;
 
-    const timeframeContext = this.getTimeframeContext(timeframe);
-    const depthContext = this.getDepthContext(analysisDepth);
+    const timeframeContext = this.getTimeframeContext(timeframe || 'current');
+    const depthContext = this.getDepthContext(analysisDepth || 'detailed');
     const competitorContext = includeCompetitors ? this.getCompetitorContext() : '';
 
     return `BRAND VISIBILITY ANALYSIS REQUEST:

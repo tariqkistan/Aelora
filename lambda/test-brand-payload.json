@@ -1,0 +1,8 @@
+{
+  "httpMethod": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    "origin": "https://aelora-9iogr2r4v-tariqkistans-projects.vercel.app"
+  },
+  "body": "{\"brandName\":\"Tesla\",\"domain\":\"tesla.com\",\"industry\":\"Automotive\"}"
+} 

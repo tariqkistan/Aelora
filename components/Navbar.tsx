@@ -2,19 +2,21 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useTranslations } from 'next-intl'
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import LanguageSelector from "@/components/LanguageSelector"
 import { cn } from "@/lib/utils"
 
 export default function Navbar() {
   const pathname = usePathname()
+  const t = useTranslations('common')
   
   const navItems = [
-    { name: "Home", href: "/" },
-    { name: "Analyzer", href: "/analyzer" },
-    { name: "Visibility", href: "/visibility" },
+    { name: t('appName'), href: "/" },
+    { name: t('analyze'), href: "/analyzer" },
+    { name: t('dashboard'), href: "/visibility" },
     { name: "Compare", href: "/compare" },
-    { name: "Lambda Test", href: "/lambda-test" },
   ]
 
   return (
@@ -22,7 +24,7 @@ export default function Navbar() {
       <div className="container flex h-16 items-center">
         <div className="flex items-center space-x-4 md:space-x-8">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold tracking-tighter">Aelora</span>
+            <span className="text-xl font-bold tracking-tighter">{t('appName')}</span>
           </Link>
           <nav className="hidden md:flex md:gap-6">
             {navItems.map((item) => (
@@ -43,10 +45,11 @@ export default function Navbar() {
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
+            <LanguageSelector />
             <ThemeToggle />
             <Button asChild variant="default" size="sm">
               <Link href="/analyzer">
-                Analyze Website
+                {t('analyze')}
               </Link>
             </Button>
           </nav>

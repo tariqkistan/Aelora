@@ -1,0 +1,68 @@
+{
+  "common": {
+    "appName": "Aelora",
+    "tagline": "Plataforma de Optimización para Búsquedas con IA",
+    "analyze": "Analizar",
+    "results": "Resultados",
+    "dashboard": "Panel",
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "retry": "Reintentar",
+    "back": "Atrás",
+    "next": "Siguiente"
+  },
+  "home": {
+    "title": "Optimiza tu Contenido para Motores de Búsqueda con IA",
+    "subtitle": "Aelora te ayuda a analizar y mejorar la visibilidad de tu sitio web en plataformas de búsqueda impulsadas por IA como ChatGPT, Perplexity y Google SGE.",
+    "analyzeButton": "Analizar tu Sitio Web",
+    "viewDashboardButton": "Ver Panel",
+    "featuresTitle": "Características",
+    "featuresSubtitle": "Herramientas potentes para destacar tu contenido en la era de la IA"
+  },
+  "analyzer": {
+    "title": "Analizador de Sitios Web",
+    "subtitle": "Cuéntanos sobre tu negocio, luego analiza tu sitio web para optimizarlo en motores de búsqueda con IA.",
+    "urlPlaceholder": "Ingresa la URL del sitio web (ej., ejemplo.com)",
+    "analyzeButton": "Analizar Sitio Web",
+    "addBusinessContext": "Agregar Contexto de Negocio",
+    "businessContextAdded": "Contexto de Negocio Agregado",
+    "betterResults": "¿Quieres mejores resultados de análisis?",
+    "confirmUrl": "Confirma la URL de tu sitio web para comenzar el análisis",
+    "enterUrl": "Ingresa la URL de tu sitio web para analizar",
+    "urlError": "Por favor ingresa una URL válida"
+  },
+  "results": {
+    "title": "Resultados del Análisis",
+    "for": "para",
+    "url": "URL:",
+    "source": "Fuente:",
+    "status": "Estado:",
+    "exportResults": "Exportar Resultados",
+    "analyzeAnother": "Analizar Otra URL",
+    "overallScore": "Puntuación General",
+    "overallScoreDesc": "Puntuación combinada de visibilidad en IA",
+    "readability": "Legibilidad",
+    "readabilityDesc": "Qué tan fácilmente la IA puede analizar tu contenido",
+    "structure": "Estructura",
+    "structureDesc": "Organización y jerarquía de encabezados",
+    "schema": "Esquema",
+    "schemaDesc": "Datos estructurados para comprensión de IA",
+    "recommendations": "Recomendaciones",
+    "aiRecommendation": "Recomendación de IA"
+  },
+  "errors": {
+    "analysisError": "Error de Análisis",
+    "noResults": "No Se Encontraron Resultados",
+    "noResultsDesc": "No hay resultados de análisis disponibles.",
+    "tryDifferentUrl": "Probar URL Diferente",
+    "troubleshooting": "Consejos de Solución de Problemas:",
+    "maxRetries": "Se alcanzó el número máximo de intentos. Por favor, prueba con una URL diferente o contacta a soporte.",
+    "noUrl": "No se proporcionó URL. Por favor ingresa una URL para analizar.",
+    "limitedAnalysis": "Análisis limitado debido a problemas de acceso al sitio web. Los resultados pueden estar incompletos."
+  }
+} 

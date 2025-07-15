@@ -1,0 +1,68 @@
+{
+  "common": {
+    "appName": "Aelora",
+    "tagline": "AI Search Optimization Platform",
+    "analyze": "Analyze",
+    "results": "Results",
+    "dashboard": "Dashboard",
+    "about": "About",
+    "contact": "Contact",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "back": "Back",
+    "next": "Next"
+  },
+  "home": {
+    "title": "Optimize Your Content for AI Search Engines",
+    "subtitle": "Aelora helps you analyze and enhance your website's visibility on AI-driven search platforms like ChatGPT, Perplexity, and Google SGE.",
+    "analyzeButton": "Analyze Your Website",
+    "viewDashboardButton": "View Dashboard",
+    "featuresTitle": "Features",
+    "featuresSubtitle": "Powerful tools to help your content stand out in the age of AI"
+  },
+  "analyzer": {
+    "title": "Website Analyzer",
+    "subtitle": "Tell us about your business, then analyze your website for AI search engine optimization.",
+    "urlPlaceholder": "Enter website URL (e.g., example.com)",
+    "analyzeButton": "Analyze Website",
+    "addBusinessContext": "Add Business Context",
+    "businessContextAdded": "Business Context Added",
+    "betterResults": "Want better analysis results?",
+    "confirmUrl": "Confirm your website URL to begin analysis",
+    "enterUrl": "Enter your website URL to analyze",
+    "urlError": "Please enter a valid URL"
+  },
+  "results": {
+    "title": "Analysis Results",
+    "for": "for",
+    "url": "URL:",
+    "source": "Source:",
+    "status": "Status:",
+    "exportResults": "Export Results",
+    "analyzeAnother": "Analyze Another URL",
+    "overallScore": "Overall Score",
+    "overallScoreDesc": "Combined AI visibility score",
+    "readability": "Readability",
+    "readabilityDesc": "How easily AI can parse your content",
+    "structure": "Structure",
+    "structureDesc": "Heading organization and hierarchy",
+    "schema": "Schema",
+    "schemaDesc": "Structured data for AI understanding",
+    "recommendations": "Recommendations",
+    "aiRecommendation": "AI Recommendation"
+  },
+  "errors": {
+    "analysisError": "Analysis Error",
+    "noResults": "No Results Found",
+    "noResultsDesc": "No analysis results available.",
+    "tryDifferentUrl": "Try Different URL",
+    "troubleshooting": "Troubleshooting Tips:",
+    "maxRetries": "Maximum retry attempts reached. Please try a different URL or contact support.",
+    "noUrl": "No URL provided. Please enter a URL to analyze.",
+    "limitedAnalysis": "Limited analysis due to website access issues. Results may be incomplete."
+  }
+} 

@@ -1,15 +1,16 @@
-import { Inter } from 'next/font/google'
 import './globals.css'
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { Analytics } from '@vercel/analytics/react'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Aelora - AI Visibility Optimization Tool',
-  description: 'Analyze and optimize your website content for AI-driven search engines',
+  title: 'Aelora - AI Search Optimization Platform',
+  description: 'Optimize your website for AI search engines with Aelora',
 }
 
 export default function RootLayout({
@@ -18,17 +19,16 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="flex flex-col min-h-screen">
+          <div className="flex min-h-screen flex-col">
             <Navbar />
-            <main className="flex-grow">
-              {children}
-            </main>
+            <main className="flex-1">{children}</main>
             <Footer />
           </div>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )

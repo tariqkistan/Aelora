@@ -1,12 +1,14 @@
-# Aelora - AI Visibility Optimization Tool
+# Aelora - AI Search Optimization Platform
 
-Aelora is a SaaS tool that analyzes website content and helps businesses improve their visibility on AI-driven search engines (Answer Engine Optimization or AEO).
+Aelora is a SaaS platform that analyzes website content and helps businesses improve their visibility on AI-driven search engines (Answer Engine Optimization or AEO).
 
 ## Features
 
-- **AEO Content Analyzer**: Analyze a page's content structure, schema, and optimization for AI engines.
-- **AI Visibility Tracker**: Estimate how likely a page is to be picked up and answered by AI-driven search platforms.
-- **Recommendation Engine**: Get actionable recommendations to improve your content for AI search engines.
+- **Business Context Analysis**: Gather detailed business information to provide personalized AI search recommendations
+- **AEO Content Analyzer**: Analyze a page's content structure, schema, and optimization for AI engines
+- **AI Ranking Visualization**: See how your content performs against competitors in AI search results
+- **Brand Visibility Dashboard**: Track sentiment trends, mentions, and AI visibility over time
+- **Recommendation Engine**: Get actionable recommendations to improve your content for AI search engines
 
 ## Tech Stack
 
@@ -22,23 +24,38 @@ Aelora is a SaaS tool that analyzes website content and helps businesses improve
 aelora/
 ├── app/ - Next.js app router pages
 │   ├── api/ - API routes (proxy to AWS)
-│   ├── analyzer/ - Analyzer page
-│   ├── results/ - Results page
+│   │   ├── analyze/ - Content analysis API
+│   │   ├── ai-ranking/ - AI ranking simulation API
+│   │   ├── visibility/ - Brand visibility API
+│   │   └── compare/ - Competitor comparison API
+│   ├── analyzer/ - Analyzer page with business questionnaire
+│   ├── visibility/ - Brand visibility dashboard
+│   ├── compare/ - Competitor comparison tool
+│   ├── results/ - Analysis results page
 │   └── page.tsx - Homepage
 ├── components/ - UI Components
-├── lambda/ - AWS Lambda functions
-│   ├── src/ - TypeScript source code
-│   ├── build.sh - Build script
-│   └── deploy.sh - Deployment script
-└── lib/ - Utility functions
+│   ├── BusinessQuestionnaire.tsx - Multi-step business context form
+│   ├── InputForm.tsx - URL input and analysis form
+│   ├── ResultsContent.tsx - Analysis results display
+│   ├── AIRankingVisualization.tsx - AI search ranking visualization
+│   └── ui/ - shadcn/ui components
+├── lib/ - Utility functions
+│   ├── apiClient.ts - API client for making requests
+│   ├── contentFetcher.ts - Fetches and processes website content
+│   ├── contentAnalyzer.ts - Analyzes content for AI optimization
+│   └── aiService.ts - AI-related utility functions
+└── backend/ - Backend logic and prompts
+    ├── prompts/ - AI prompt templates
+    └── utils/ - Backend utility functions
 ```
 
-## Setting Up the Frontend
+## Development Setup
 
 ### Prerequisites
 
 - Node.js 18.x or later
 - npm or yarn
+- Git
 
 ### Installation
 
@@ -57,6 +74,9 @@ aelora/
    ```
    # AWS API Gateway URL
    NEXT_PUBLIC_AWS_API_URL=https://your-api-gateway-id.execute-api.us-east-1.amazonaws.com/prod
+   
+   # OpenAI API Key (for local development)
+   OPENAI_API_KEY=your_openai_api_key
    ```
 
 4. Run the development server
@@ -66,76 +86,128 @@ aelora/
 
 5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-## Setting Up the Lambda Backend
+## Version Control Guidelines
 
-### Prerequisites
+We use Git for version control. Please follow these guidelines for a stable development workflow:
 
-- AWS CLI installed and configured
-- Node.js 18.x or later
-- npm or yarn
+### Branch Strategy
 
-### Deployment Steps
+- `main` - Production-ready code, always stable
+- `development` - Integration branch for new features
+- `feature/feature-name` - Feature branches for new development
+- `bugfix/bug-name` - Bug fix branches
+- `hotfix/fix-name` - Urgent fixes for production
+
+### Development Workflow
+
+1. Always create a new branch from `development` for your work:
+   ```
+   git checkout development
+   git pull
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make your changes and commit regularly with descriptive messages:
+   ```
+   git add .
+   git commit -m "feat: add business questionnaire validation"
+   ```
+
+3. Push your branch to the remote repository:
+   ```
+   git push -u origin feature/your-feature-name
+   ```
+
+4. Create a Pull Request to merge into `development`
+
+5. After code review and testing, merge into `development`
+
+6. Periodically, `development` is merged into `main` for production releases
+
+### Commit Message Format
+
+Follow conventional commits format:
+
+- `feat:` - A new feature
+- `fix:` - A bug fix
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `refactor:` - Code changes that neither fix bugs nor add features
+- `test:` - Adding or updating tests
+- `chore:` - Changes to build process or auxiliary tools
+
+## Testing
+
+### Running Tests
+
+```bash
+# Run unit tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+### Manual Testing Checklist
+
+Before submitting a PR, please verify:
+
+1. Business questionnaire works through all steps
+2. URL analysis works with and without business context
+3. AI ranking visualization displays correctly
+4. Responsive design works on mobile and desktop
+5. No console errors appear during normal operation
+
+## Deployment
+
+### Frontend Deployment (Vercel)
+
+1. Push your code to the `main` branch
+
+2. Vercel will automatically deploy changes from the `main` branch
+
+3. Ensure environment variables are configured in Vercel:
+   - `NEXT_PUBLIC_AWS_API_URL`: Your AWS API Gateway URL
+
+### Backend Deployment (AWS Lambda)
 
 1. Navigate to the Lambda directory
    ```
    cd lambda
    ```
 
-2. Install dependencies
+2. Build and deploy the Lambda function
    ```
-   npm install
+   npm run build
+   npm run deploy
    ```
-
-3. Build and package the Lambda function
-   ```
-   ./build.sh
-   ```
-   This will create a `function.zip` file containing the compiled code and dependencies.
-
-4. Deploy the function to AWS Lambda
-   ```
-   ./deploy.sh YOUR_LAMBDA_FUNCTION_NAME
-   ```
-   Replace `YOUR_LAMBDA_FUNCTION_NAME` with your actual Lambda function name.
-
-5. Configure Lambda environment variables in the AWS Console:
-   - `OPENAI_API_KEY`: Your OpenAI API key
-   - `DYNAMODB_TABLE_NAME`: Your DynamoDB table for storing analysis results
-
-## API Integration Options
-
-Aelora provides two options for calling the analysis API:
-
-1. **Next.js API Proxy**: The frontend calls a Next.js API route, which forwards the request to the AWS API Gateway. This is the default option.
-
-2. **Direct AWS API**: The frontend calls the AWS API Gateway directly. This can be toggled on in the UI.
-
-## Deployment
-
-### Frontend Deployment (Vercel)
-
-1. Push your code to a Git repository
-
-2. Connect your repository to Vercel
-
-3. Configure environment variables in Vercel:
-   - `NEXT_PUBLIC_AWS_API_URL`: Your AWS API Gateway URL
-
-4. Deploy
-
-### Backend Deployment (AWS Lambda)
-
-Follow the Lambda deployment steps above.
 
 ## Troubleshooting
 
-If you encounter issues with the Lambda function:
+### Common Issues
 
-1. Check the CloudWatch Logs in AWS Console
-2. Verify that the handler name is set correctly to `index.handler`
-3. Ensure all environment variables are set properly
-4. Check that the correct runtime (Node.js 18.x) is selected
-5. Verify CORS headers if making requests from a browser
+1. **API Errors**:
+   - Check AWS Lambda CloudWatch logs
+   - Verify API Gateway CORS configuration
+   - Ensure environment variables are set correctly
+
+2. **Build Errors**:
+   - Clear `.next` cache: `rm -rf .next`
+   - Reinstall dependencies: `npm ci`
+   - Check TypeScript errors: `npm run type-check`
+
+3. **Content Analysis Issues**:
+   - Verify the website is publicly accessible
+   - Check for anti-bot protections on the target site
+   - Try analyzing a specific page rather than the homepage
+
+### Getting Help
+
+If you encounter issues not covered here, please:
+
+1. Check existing GitHub issues
+2. Create a new issue with detailed reproduction steps
+3. Include error messages and environment details
 
 ## License
 

@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { analyzeUrl, configureApiClient } from "@/lib/apiClient"
 import BusinessQuestionnaire, { BusinessInfo } from "./BusinessQuestionnaire"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Globe, ArrowRight } from "lucide-react"
+import { Building2, Globe, ArrowRight, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function InputForm() {
   const [step, setStep] = useState<'questionnaire' | 'url' | 'analyzing'>('questionnaire')
@@ -19,36 +20,54 @@ export default function InputForm() {
 
   // Always use AWS API directly
   useEffect(() => {
-    configureApiClient({ useDirectApi: true })
+    try {
+      configureApiClient({ useDirectApi: true })
+    } catch (err) {
+      console.error("Failed to configure API client:", err)
+      setError("Failed to initialize API client. Please refresh the page.")
+    }
   }, [])
 
   const handleBusinessInfoComplete = (info: BusinessInfo) => {
-    setBusinessInfo(info)
-    setUrl(info.website) // Pre-fill URL from business info
-    setStep('url')
+    try {
+      setBusinessInfo(info)
+      setUrl(info.website || "") // Pre-fill URL from business info with fallback
+      setStep('url')
+    } catch (err) {
+      console.error("Error handling business info:", err)
+      setError("Failed to process business information. Please try again.")
+    }
   }
 
   const handleSkipQuestionnaire = () => {
     setStep('url')
+    setBusinessInfo(null) // Ensure business info is cleared when skipped
+  }
+
+  const validateUrl = (inputUrl: string): string => {
+    if (!inputUrl) {
+      throw new Error("Please enter a URL")
+    }
+    
+    let formattedUrl = inputUrl
+    if (!inputUrl.startsWith('http://') && !inputUrl.startsWith('https://')) {
+      formattedUrl = `https://${inputUrl}`
+    }
+    
+    try {
+      new URL(formattedUrl)
+      return formattedUrl
+    } catch {
+      throw new Error("Please enter a valid URL")
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     
-    // Basic URL validation
-    if (!url) {
-      setError("Please enter a URL")
-      return
-    }
-    
-    let formattedUrl = url
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      formattedUrl = `https://${url}`
-    }
-    
     try {
-      const urlObj = new URL(formattedUrl)
+      const formattedUrl = validateUrl(url)
       setIsLoading(true)
       
       // Build query parameters with business info
@@ -56,28 +75,34 @@ export default function InputForm() {
       
       if (businessInfo) {
         // Add business context to the query
-        queryParams.append('businessContext', JSON.stringify({
-          companyName: businessInfo.companyName,
-          industry: businessInfo.industry,
-          companySize: businessInfo.companySize,
-          primaryLocation: businessInfo.primaryLocation,
-          country: businessInfo.country,
-          targetMarkets: businessInfo.targetMarkets,
-          businessModel: businessInfo.businessModel,
-          targetAudience: businessInfo.targetAudience,
-          priceRange: businessInfo.priceRange,
-          mainCompetitors: businessInfo.mainCompetitors,
-          primaryGoals: businessInfo.primaryGoals,
-          currentChallenges: businessInfo.currentChallenges,
-          brandPersonality: businessInfo.brandPersonality,
-          additionalInfo: businessInfo.additionalInfo
-        }))
+        try {
+          queryParams.append('businessContext', JSON.stringify({
+            companyName: businessInfo.companyName,
+            industry: businessInfo.industry,
+            companySize: businessInfo.companySize,
+            primaryLocation: businessInfo.primaryLocation,
+            country: businessInfo.country,
+            targetMarkets: businessInfo.targetMarkets || [],
+            businessModel: businessInfo.businessModel,
+            targetAudience: businessInfo.targetAudience,
+            priceRange: businessInfo.priceRange,
+            mainCompetitors: businessInfo.mainCompetitors || [],
+            primaryGoals: businessInfo.primaryGoals || [],
+            currentChallenges: businessInfo.currentChallenges || [],
+            brandPersonality: businessInfo.brandPersonality,
+            additionalInfo: businessInfo.additionalInfo
+          }))
+        } catch (jsonError) {
+          console.error("Failed to serialize business context:", jsonError)
+          // Continue without business context if serialization fails
+        }
       }
       
       // Redirect to the results page with the URL and business context
       router.push(`/results?${queryParams.toString()}`)
     } catch (err) {
-      setError("Please enter a valid URL")
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred"
+      setError(errorMessage)
       setIsLoading(false)
     }
   }
@@ -89,6 +114,12 @@ export default function InputForm() {
   if (step === 'questionnaire') {
     return (
       <div className="w-full max-w-4xl mx-auto">
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <BusinessQuestionnaire
           onComplete={handleBusinessInfoComplete}
           onSkip={handleSkipQuestionnaire}
@@ -99,6 +130,14 @@ export default function InputForm() {
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
       {/* Business Info Summary (if provided) */}
       {businessInfo && (
         <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
@@ -166,9 +205,6 @@ export default function InputForm() {
                 className="w-full"
                 disabled={isLoading}
               />
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
             </div>
             
             <Button

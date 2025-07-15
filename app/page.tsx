@@ -23,8 +23,8 @@ export default function Home() {
                 </Link>
               </Button>
               <Button variant="outline" size="lg">
-                <Link href="/about">
-                  Learn More
+                <Link href="/visibility">
+                  View Dashboard
                 </Link>
               </Button>
             </div>
@@ -83,15 +83,13 @@ export default function Home() {
                   strokeLinejoin="round"
                   className="h-6 w-6 text-primary"
                 >
-                  <path d="M20 7h-9" />
-                  <path d="M14 17H5" />
-                  <circle cx="17" cy="17" r="3" />
-                  <circle cx="7" cy="7" r="3" />
+                  <path d="M3 3v18h18" />
+                  <path d="m19 9-5 5-4-4-3 3" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold">Quick Wins & Insights</h3>
+              <h3 className="text-xl font-bold">Brand Visibility Dashboard</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Get immediate actionable recommendations and priority-based improvements for instant results.
+                Track sentiment trends, monitor mentions, and analyze your brand's AI visibility over time.
               </p>
             </div>
             <div className="flex flex-col items-center space-y-2 rounded-lg p-4">
@@ -126,7 +124,7 @@ export default function Home() {
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                🚀 Enhanced AI Analysis
+                Enhanced AI Analysis
               </h2>
               <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                 New smart features that maximize value while keeping costs low
@@ -135,7 +133,7 @@ export default function Home() {
           </div>
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:gap-12 mt-8">
             <div className="flex flex-col space-y-4 rounded-lg border p-6">
-              <h3 className="text-xl font-bold">🎯 Smart Content Extraction</h3>
+              <h3 className="text-xl font-bold">Smart Content Extraction</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Prioritizes high-impact content (titles, headings, CTAs)</li>
                 <li>• Reduces token usage by 60-80%</li>
@@ -144,7 +142,7 @@ export default function Home() {
               </ul>
             </div>
             <div className="flex flex-col space-y-4 rounded-lg border p-6">
-              <h3 className="text-xl font-bold">🏭 Industry-Specific Templates</h3>
+              <h3 className="text-xl font-bold">Industry-Specific Templates</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• E-commerce, SaaS, Local Business, Healthcare</li>
                 <li>• Targeted recommendations for each industry</li>
@@ -153,7 +151,7 @@ export default function Home() {
               </ul>
             </div>
             <div className="flex flex-col space-y-4 rounded-lg border p-6">
-              <h3 className="text-xl font-bold">⚡ Quick Wins & Priorities</h3>
+              <h3 className="text-xl font-bold">Quick Wins & Priorities</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Immediate actionable improvements</li>
                 <li>• Priority levels (high/medium/low)</li>
@@ -162,7 +160,7 @@ export default function Home() {
               </ul>
             </div>
             <div className="flex flex-col space-y-4 rounded-lg border p-6">
-              <h3 className="text-xl font-bold">📊 Performance Tracking</h3>
+              <h3 className="text-xl font-bold">Performance Tracking</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Real-time analysis performance metrics</li>
                 <li>• Content type and industry detection</li>
@@ -170,6 +168,67 @@ export default function Home() {
                 <li>• Detailed breakdown of all insights</li>
               </ul>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* New Visibility Dashboard Section */}
+      <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/40">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                Brand Visibility Dashboard
+              </h2>
+              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+                Monitor your brand's AI visibility with comprehensive sentiment analysis and trend tracking
+              </p>
+            </div>
+          </div>
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:gap-12 mt-8">
+            <div className="flex flex-col space-y-4 rounded-lg border p-6">
+              <h3 className="text-xl font-bold">Sentiment Over Time</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• Interactive Chart.js visualizations</li>
+                <li>• 30-day sentiment trend analysis</li>
+                <li>• Positive, neutral, and negative thresholds</li>
+                <li>• Hover tooltips with detailed insights</li>
+              </ul>
+            </div>
+            <div className="flex flex-col space-y-4 rounded-lg border p-6">
+              <h3 className="text-xl font-bold">Keyword Mentions</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• Color-coded sentiment badges</li>
+                <li>• Frequency analysis with progress bars</li>
+                <li>• Positive, neutral, and negative categorization</li>
+                <li>• Most impactful keywords highlighted</li>
+              </ul>
+            </div>
+            <div className="flex flex-col space-y-4 rounded-lg border p-6">
+              <h3 className="text-xl font-bold">Key Metrics</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• Average sentiment score with trends</li>
+                <li>• Total mentions across all platforms</li>
+                <li>• Brand visibility status indicators</li>
+                <li>• Real-time data refresh capabilities</li>
+              </ul>
+            </div>
+            <div className="flex flex-col space-y-4 rounded-lg border p-6">
+              <h3 className="text-xl font-bold">AI-Powered Insights</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• GPT-4 generated analysis summaries</li>
+                <li>• Brand comparison capabilities</li>
+                <li>• Industry-specific recommendations</li>
+                <li>• Competitive positioning insights</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex justify-center mt-8">
+            <Button asChild size="lg">
+              <Link href="/visibility">
+                Explore Visibility Dashboard
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

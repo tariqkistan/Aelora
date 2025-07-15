@@ -1,0 +1,579 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Aelora Weekly Brand Scan Automation with EventBridge'
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Default: 'aelora-visibility-lambda'
+    Description: 'Name of the Lambda function'
+  
+  ScheduleTimezone:
+    Type: String
+    Default: 'UTC'
+    Description: 'Timezone for the schedule (e.g., America/New_York)'
+  
+  NotificationEmail:
+    Type: String
+    Default: 'admin@aelora.com'
+    Description: 'Email address for notifications'
+  
+  Environment:
+    Type: String
+    Default: 'production'
+    AllowedValues: ['development', 'staging', 'production']
+    Description: 'Environment name'
+
+Resources:
+  # DynamoDB Table for storing scan results
+  BrandScansTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${LambdaFunctionName}-scans'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: brandName
+          AttributeType: S
+        - AttributeName: scanTimestamp
+          AttributeType: S
+        - AttributeName: scanId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: brandName
+          KeyType: HASH
+        - AttributeName: scanTimestamp
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: scanId-index
+          KeySchema:
+            - AttributeName: scanId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Project
+          Value: Aelora
+        - Key: Environment
+          Value: !Ref Environment
+
+  # IAM Role for Lambda function
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${LambdaFunctionName}-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Query
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                Resource: 
+                  - !GetAtt BrandScansTable.Arn
+                  - !Sub '${BrandScansTable.Arn}/index/*'
+        - PolicyName: CloudWatchMetrics
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+        - PolicyName: ParameterStoreAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/aelora/*'
+
+  # Lambda function for brand analysis
+  VisibilityLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref BrandScansTable
+          ENVIRONMENT: !Ref Environment
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import logging
+          import os
+          from datetime import datetime, timezone, timedelta
+          from typing import Dict, List, Any
+
+          # Configure logging
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          # AWS clients
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
+          cloudwatch = boto3.client('cloudwatch')
+
+          def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+              """Enhanced Lambda handler for both API Gateway and EventBridge triggers"""
+              try:
+                  event_source = event.get('source', 'api-gateway')
+                  
+                  if event_source == 'eventbridge-scheduled':
+                      return handle_scheduled_scan(event, context)
+                  else:
+                      return handle_api_request(event, context)
+                      
+              except Exception as e:
+                  logger.error(f"Lambda execution failed: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({
+                          'success': False,
+                          'error': str(e)
+                      })
+                  }
+
+          def handle_scheduled_scan(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+              """Handle EventBridge scheduled scans"""
+              logger.info("Processing scheduled brand scan from EventBridge")
+              
+              brands = event.get('brands', [])
+              
+              if not brands:
+                  logger.warning("No brands provided in scheduled event")
+                  return {
+                      'statusCode': 400,
+                      'body': json.dumps({
+                          'success': False,
+                          'error': 'No brands provided for scanning'
+                      })
+                  }
+              
+              results = []
+              scan_timestamp = datetime.now(timezone.utc).isoformat()
+              
+              for brand_config in brands:
+                  try:
+                      brand_name = brand_config.get('brandName')
+                      domain = brand_config.get('domain')
+                      industry = brand_config.get('industry')
+                      
+                      logger.info(f"Processing scheduled scan for {brand_name}")
+                      
+                      if is_recent_scan_exists(brand_name, days=6):
+                          logger.info(f"Skipping {brand_name} - recent scan exists")
+                          results.append({
+                              'brand': brand_name,
+                              'status': 'skipped',
+                              'reason': 'Recent scan exists'
+                          })
+                          continue
+                      
+                      analysis_result = perform_brand_analysis(brand_name, domain, industry)
+                      store_scan_result(brand_name, domain, industry, analysis_result, scan_timestamp)
+                      
+                      results.append({
+                          'brand': brand_name,
+                          'status': 'completed',
+                          'timestamp': scan_timestamp
+                      })
+                      
+                      logger.info(f"Completed scheduled scan for {brand_name}")
+                      
+                  except Exception as e:
+                      logger.error(f"Failed to process {brand_name}: {str(e)}")
+                      results.append({
+                          'brand': brand_name,
+                          'status': 'failed',
+                          'error': str(e)
+                      })
+              
+              completed = len([r for r in results if r['status'] == 'completed'])
+              skipped = len([r for r in results if r['status'] == 'skipped'])
+              failed = len([r for r in results if r['status'] == 'failed'])
+              
+              logger.info(f"Scheduled scan summary: {completed} completed, {skipped} skipped, {failed} failed")
+              
+              # Publish custom metrics
+              publish_scan_metrics(completed, skipped, failed)
+              
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({
+                      'success': True,
+                      'source': 'scheduled',
+                      'summary': {
+                          'total': len(brands),
+                          'completed': completed,
+                          'skipped': skipped,
+                          'failed': failed
+                      },
+                      'results': results,
+                      'timestamp': scan_timestamp
+                  })
+              }
+
+          def handle_api_request(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+              """Handle API Gateway requests"""
+              logger.info("Processing API request")
+              
+              try:
+                  if 'body' in event:
+                      body = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
+                  else:
+                      body = event
+              except json.JSONDecodeError:
+                  return {
+                      'statusCode': 400,
+                      'body': json.dumps({
+                          'success': False,
+                          'error': 'Invalid JSON in request body'
+                      })
+                  }
+              
+              brand_name = body.get('brandName')
+              domain = body.get('domain')
+              industry = body.get('industry')
+              
+              if not all([brand_name, domain, industry]):
+                  return {
+                      'statusCode': 400,
+                      'body': json.dumps({
+                          'success': False,
+                          'error': 'Missing required parameters: brandName, domain, industry'
+                      })
+                  }
+              
+              try:
+                  analysis_result = perform_brand_analysis(brand_name, domain, industry)
+                  timestamp = datetime.now(timezone.utc).isoformat()
+                  store_scan_result(brand_name, domain, industry, analysis_result, timestamp)
+                  
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({
+                          'success': True,
+                          'data': analysis_result,
+                          'timestamp': timestamp
+                      })
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"Analysis failed for {brand_name}: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({
+                          'success': False,
+                          'error': str(e)
+                      })
+                  }
+
+          def is_recent_scan_exists(brand_name: str, days: int = 6) -> bool:
+              """Check if a recent scan exists for the brand"""
+              try:
+                  cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+                  cutoff_timestamp = cutoff_date.isoformat()
+                  
+                  response = table.query(
+                      KeyConditionExpression='brandName = :brand_name',
+                      FilterExpression='scanTimestamp > :cutoff',
+                      ExpressionAttributeValues={
+                          ':brand_name': brand_name,
+                          ':cutoff': cutoff_timestamp
+                      },
+                      Limit=1
+                  )
+                  
+                  return len(response.get('Items', [])) > 0
+                  
+              except Exception as e:
+                  logger.warning(f"Error checking recent scans for {brand_name}: {str(e)}")
+                  return False
+
+          def store_scan_result(brand_name: str, domain: str, industry: str, 
+                               analysis_result: Dict[str, Any], timestamp: str) -> None:
+              """Store scan results in DynamoDB"""
+              try:
+                  scan_id = f"{brand_name}_{timestamp.split('T')[0]}_{hash(timestamp) % 10000}"
+                  
+                  item = {
+                      'brandName': brand_name,
+                      'scanId': scan_id,
+                      'domain': domain,
+                      'industry': industry,
+                      'scanTimestamp': timestamp,
+                      'source': 'scheduled',
+                      'analysisResult': analysis_result,
+                      'ttl': int((datetime.now(timezone.utc).timestamp() + (90 * 24 * 60 * 60)))
+                  }
+                  
+                  table.put_item(
+                      Item=item,
+                      ConditionExpression='attribute_not_exists(scanId)'
+                  )
+                  
+                  logger.info(f"Stored scan result for {brand_name}")
+                  
+              except table.meta.client.exceptions.ConditionalCheckFailedException:
+                  logger.warning(f"Duplicate scan detected for {brand_name}")
+              except Exception as e:
+                  logger.error(f"Failed to store scan result: {str(e)}")
+                  raise
+
+          def perform_brand_analysis(brand_name: str, domain: str, industry: str) -> Dict[str, Any]:
+              """Perform brand analysis (placeholder implementation)"""
+              logger.info(f"Performing analysis for {brand_name}")
+              
+              return {
+                  'brandName': brand_name,
+                  'domain': domain,
+                  'industry': industry,
+                  'visibilityScore': 85,
+                  'sentiment': 'positive',
+                  'mentions': 1250,
+                  'trends': ['increasing', 'positive'],
+                  'recommendations': [
+                      'Maintain current brand positioning',
+                      'Increase social media engagement',
+                      'Monitor competitor activities'
+                  ]
+              }
+
+          def publish_scan_metrics(completed: int, skipped: int, failed: int) -> None:
+              """Publish custom metrics to CloudWatch"""
+              try:
+                  cloudwatch.put_metric_data(
+                      Namespace='Aelora/BrandScans',
+                      MetricData=[
+                          {
+                              'MetricName': 'ScanCount',
+                              'Dimensions': [{'Name': 'Status', 'Value': 'completed'}],
+                              'Value': completed,
+                              'Unit': 'Count'
+                          },
+                          {
+                              'MetricName': 'ScanCount',
+                              'Dimensions': [{'Name': 'Status', 'Value': 'skipped'}],
+                              'Value': skipped,
+                              'Unit': 'Count'
+                          },
+                          {
+                              'MetricName': 'ScanCount',
+                              'Dimensions': [{'Name': 'Status', 'Value': 'failed'}],
+                              'Value': failed,
+                              'Unit': 'Count'
+                          }
+                      ]
+                  )
+              except Exception as e:
+                  logger.error(f"Failed to publish metrics: {str(e)}")
+
+      Tags:
+        - Key: Project
+          Value: Aelora
+        - Key: Environment
+          Value: !Ref Environment
+
+  # EventBridge Rule for Weekly Scans
+  WeeklyBrandScanRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${LambdaFunctionName}-weekly-scan'
+      Description: 'Triggers brand visibility analysis every Monday at 9 AM'
+      ScheduleExpression: 'cron(0 9 ? * MON *)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt VisibilityLambdaFunction.Arn
+          Id: 'WeeklyBrandScanTarget'
+          Input: !Sub |
+            {
+              "source": "eventbridge-scheduled",
+              "scheduledTime": "${AWS::StackName}",
+              "brands": [
+                {
+                  "brandName": "Apple",
+                  "domain": "apple.com",
+                  "industry": "Technology"
+                },
+                {
+                  "brandName": "Tesla",
+                  "domain": "tesla.com", 
+                  "industry": "Automotive"
+                },
+                {
+                  "brandName": "Netflix",
+                  "domain": "netflix.com",
+                  "industry": "Entertainment"
+                }
+              ]
+            }
+
+  # Permission for EventBridge to invoke Lambda
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref VisibilityLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt WeeklyBrandScanRule.Arn
+
+  # CloudWatch Log Groups
+  EventBridgeLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/events/${LambdaFunctionName}-weekly-scan'
+      RetentionInDays: 30
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${LambdaFunctionName}'
+      RetentionInDays: 14
+
+  # SNS Topic for notifications
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${LambdaFunctionName}-notifications'
+      DisplayName: 'Aelora Brand Scan Notifications'
+
+  # SNS Subscription
+  NotificationSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref NotificationTopic
+      Protocol: email
+      Endpoint: !Ref NotificationEmail
+
+  # CloudWatch Alarms
+  ScheduledScanFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${LambdaFunctionName}-Scheduled-Scan-Failures'
+      AlarmDescription: 'Alert when scheduled scans fail'
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref VisibilityLambdaFunction
+      AlarmActions:
+        - !Ref NotificationTopic
+
+  LambdaDurationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${LambdaFunctionName}-Duration-High'
+      AlarmDescription: 'Alert when Lambda duration is high'
+      MetricName: Duration
+      Namespace: AWS/Lambda
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 240000  # 4 minutes in milliseconds
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref VisibilityLambdaFunction
+      AlarmActions:
+        - !Ref NotificationTopic
+
+  # Parameter Store for brand configurations
+  BrandConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/aelora/brands/config'
+      Type: String
+      Value: !Sub |
+        {
+          "brands": [
+            {
+              "brandName": "Apple",
+              "domain": "apple.com",
+              "industry": "Technology",
+              "enabled": true
+            },
+            {
+              "brandName": "Tesla",
+              "domain": "tesla.com",
+              "industry": "Automotive",
+              "enabled": true
+            },
+            {
+              "brandName": "Netflix",
+              "domain": "netflix.com",
+              "industry": "Entertainment",
+              "enabled": true
+            }
+          ]
+        }
+      Description: 'Brand configurations for scheduled scans'
+      Tags:
+        Project: Aelora
+        Environment: !Ref Environment
+
+Outputs:
+  EventRuleArn:
+    Description: 'ARN of the EventBridge rule'
+    Value: !GetAtt WeeklyBrandScanRule.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-EventRuleArn'
+
+  LambdaFunctionArn:
+    Description: 'ARN of the Lambda function'
+    Value: !GetAtt VisibilityLambdaFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaFunctionArn'
+
+  DynamoDBTableName:
+    Description: 'Name of the DynamoDB table'
+    Value: !Ref BrandScansTable
+    Export:
+      Name: !Sub '${AWS::StackName}-DynamoDBTableName'
+
+  NotificationTopicArn:
+    Description: 'ARN of the SNS notification topic'
+    Value: !Ref NotificationTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-NotificationTopicArn'
+
+  ScheduleExpression:
+    Description: 'EventBridge schedule expression'
+    Value: 'cron(0 9 ? * MON *)'
+    Export:
+      Name: !Sub '${AWS::StackName}-ScheduleExpression' 

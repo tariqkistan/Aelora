@@ -12,6 +12,9 @@ export default function Navbar() {
   const navItems = [
     { name: "Home", href: "/" },
     { name: "Analyzer", href: "/analyzer" },
+    { name: "Visibility", href: "/visibility" },
+    { name: "Compare", href: "/compare" },
+    { name: "Lambda Test", href: "/lambda-test" },
   ]
 
   return (

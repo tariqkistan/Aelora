@@ -1,0 +1,42 @@
+
+> aelora@0.1.0 build
+> next build
+
+   ▲ Next.js 14.1.0
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/15) ...
+   Generating static pages (3/15) 
+   Generating static pages (7/15) 
+   Generating static pages (11/15) 
+ ✓ Generating static pages (15/15) 
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    175 B          91.1 kB
+├ ○ /_not-found                          885 B          85.1 kB
+├ ○ /about                               143 B          84.3 kB
+├ ○ /analyzer                            2.7 kB         94.7 kB
+├ λ /api/analyze                         0 B                0 B
+├ λ /api/compare                         0 B                0 B
+├ λ /api/visibility                      0 B                0 B
+├ ○ /compare                             5.48 kB         122 kB
+├ ○ /lambda-test                         4.48 kB         121 kB
+├ ○ /privacy                             144 B          84.3 kB
+├ ○ /results                             6.29 kB         105 kB
+├ ○ /terms                               142 B          84.3 kB
+└ ○ /visibility                          75.1 kB         191 kB
++ First Load JS shared by all            84.2 kB
+  ├ chunks/69-4c3360097572f278.js        28.9 kB
+  ├ chunks/fd9d1056-0a15ad50a46fccfb.js  53.4 kB
+  └ other shared chunks (total)          1.9 kB
+
+
+○  (Static)   prerendered as static content
+λ  (Dynamic)  server-rendered on demand using Node.js
+

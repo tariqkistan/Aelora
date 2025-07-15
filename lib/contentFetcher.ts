@@ -20,89 +20,134 @@ export interface WebContent {
 
 export async function fetchContentFromUrl(url: string): Promise<WebContent | null> {
   try {
+    console.log(`Fetching content from: ${url}`);
+    const startTime = Date.now();
+    
+    // Create an AbortController for timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.log(`Fetch timeout for ${url} after 10 seconds`);
+      controller.abort();
+    }, 10000); // 10 second timeout for fetching content
+    
     const response = await fetch(url, {
       headers: {
         // Set a realistic user agent to avoid being blocked
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    })
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+      },
+      signal: controller.signal,
+      // Add additional fetch options for better reliability
+      redirect: 'follow'
+    });
+    
+    // Clear the timeout since fetch completed
+    clearTimeout(timeoutId);
+    
+    const fetchTime = Date.now() - startTime;
+    console.log(`Fetch completed in ${fetchTime}ms for ${url}`);
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`)
+      throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
     }
     
-    const html = await response.text()
-    const dom = new JSDOM(html)
-    const document = dom.window.document
+    // Check content type to ensure it's HTML
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('text/html')) {
+      throw new Error(`Invalid content type: ${contentType}. Expected HTML.`);
+    }
+    
+    // Get the response text with size limit
+    const html = await response.text();
+    
+    // Check if the HTML is too large (over 5MB)
+    if (html.length > 5 * 1024 * 1024) {
+      console.warn(`Large HTML document detected: ${html.length} characters`);
+      // Still process but log the warning
+    }
+    
+    const parseStartTime = Date.now();
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
     
     // Get content to code ratio
-    const textContent = document.body.textContent || ''
-    const contentToCodeRatio = textContent.length / html.length
+    const textContent = document.body.textContent || '';
+    const contentToCodeRatio = textContent.length / html.length;
     
     // Extract title
-    const title = document.querySelector('title')?.textContent || ''
+    const title = document.querySelector('title')?.textContent || '';
     
     // Extract meta description
-    const metaDesc = document.querySelector('meta[name="description"]')?.getAttribute('content') || ''
+    const metaDesc = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
     
     // Extract main content (prioritizing article or main, falling back to body)
-    const contentElement = findMainContent(document)
-    const mainContent = contentElement ? cleanText(contentElement.textContent || '') : ''
+    const contentElement = findMainContent(document);
+    const mainContent = contentElement ? cleanText(contentElement.textContent || '') : '';
     
     // Extract paragraphs
-    const paragraphCount = document.querySelectorAll('p').length
+    const paragraphCount = document.querySelectorAll('p').length;
     
     // Extract headings
-    const headingElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
+    const headingElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
     const headings = Array.from(headingElements).map(el => {
       return {
         level: parseInt(el.tagName.substring(1)),
         text: el.textContent || ''
-      }
-    })
+      };
+    });
     
     // Extract links
-    const linkElements = document.querySelectorAll('a[href]')
+    const linkElements = document.querySelectorAll('a[href]');
     const links = Array.from(linkElements)
       .map(el => el.getAttribute('href') || '')
-      .filter(href => href && !href.startsWith('#') && !href.startsWith('javascript:'))
+      .filter(href => href && !href.startsWith('#') && !href.startsWith('javascript:'));
     
     // Extract images
-    const imageElements = document.querySelectorAll('img')
+    const imageElements = document.querySelectorAll('img');
     const images = Array.from(imageElements).map(el => {
       return {
         src: el.getAttribute('src') || '',
         alt: el.getAttribute('alt') || ''
-      }
-    })
+      };
+    });
     
     // Extract schema markup
-    const schemaScripts = document.querySelectorAll('script[type="application/ld+json"]')
-    const schema = Array.from(schemaScripts).map(el => el.textContent || '').filter(Boolean)
+    const schemaScripts = document.querySelectorAll('script[type="application/ld+json"]');
+    const schema = Array.from(schemaScripts).map(el => el.textContent || '').filter(Boolean);
     
     // Extract meta tags
-    const metaTags = document.querySelectorAll('meta')
-    const meta: Record<string, string> = {}
+    const metaTags = document.querySelectorAll('meta');
+    const meta: Record<string, string> = {};
     Array.from(metaTags).forEach(el => {
-      const name = el.getAttribute('name') || el.getAttribute('property')
-      const content = el.getAttribute('content')
+      const name = el.getAttribute('name') || el.getAttribute('property');
+      const content = el.getAttribute('content');
       if (name && content) {
-        meta[name] = content
+        meta[name] = content;
       }
-    })
+    });
     
     // Extract tables and lists
-    const tableCount = document.querySelectorAll('table').length
-    const listCount = document.querySelectorAll('ul, ol').length
+    const tableCount = document.querySelectorAll('table').length;
+    const listCount = document.querySelectorAll('ul, ol').length;
     
     // Extract FAQ content (looking for common patterns)
-    const faqs = extractFAQs(document)
+    const faqs = extractFAQs(document);
     
     // Extract keywords (from meta keywords and page content)
-    const keywords = extractKeywords(document, meta, mainContent)
+    const keywords = extractKeywords(document, meta, mainContent);
     
     // Calculate word count
-    const wordCount = mainContent.split(/\s+/).filter(Boolean).length
+    const wordCount = mainContent.split(/\s+/).filter(Boolean).length;
+    
+    const parseTime = Date.now() - parseStartTime;
+    const totalTime = Date.now() - startTime;
+    
+    console.log(`Content parsing completed in ${parseTime}ms. Total time: ${totalTime}ms`);
     
     return {
       title,
@@ -120,10 +165,22 @@ export async function fetchContentFromUrl(url: string): Promise<WebContent | nul
       lists: listCount,
       contentToCodeRatio,
       keywords
-    }
+    };
   } catch (error) {
-    console.error('Error fetching URL content:', error)
-    return null
+    console.error('Error fetching URL content:', error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.error('Request timed out while fetching content');
+        throw new Error('Website took too long to respond (timeout after 10 seconds)');
+      } else if (error.message.includes('Failed to fetch')) {
+        console.error('Network error while fetching content');
+        throw new Error('Unable to connect to the website. Please check the URL and try again.');
+      }
+    }
+    
+    return null;
   }
 }
 

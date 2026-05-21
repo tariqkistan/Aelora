@@ -1,5 +1,8 @@
 # Aelora - AI Visibility Optimization Tool
 
+<img width="1438" height="776" alt="Screenshot 2026-05-21 at 21 28 49" src="https://github.com/user-attachments/assets/6ddad40c-e69a-4222-9c3e-9005646bbe00" />
+
+
 Aelora is a SaaS tool that analyzes website content and helps businesses improve their visibility on AI-driven search engines (Answer Engine Optimization or AEO).
 
 ## Features
